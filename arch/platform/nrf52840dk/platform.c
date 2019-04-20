@@ -40,11 +40,6 @@
 
 #include "nrf_drv_config.h"
 #include "nrf_drv_gpiote.h"
-#ifdef SOFTDEVICE_PRESENT
-#include "softdevice_handler.h"
-#include "ble/ble-core.h"
-#include "ble/ble-mac.h"
-#endif
 
 #include "contiki-net.h"
 #include "leds.h"
@@ -59,39 +54,6 @@
 #define LOG_MODULE "NRF52DK"
 #define LOG_LEVEL LOG_LEVEL_MAIN
 /*---------------------------------------------------------------------------*/
-#if defined(SOFTDEVICE_PRESENT) && PLATFORM_INDICATE_BLE_STATE
-PROCESS(ble_iface_observer, "BLE interface observer");
-
-/**
- * \brief A process that handles adding/removing
- *        BLE IPSP interfaces.
- */
-PROCESS_THREAD(ble_iface_observer, ev, data)
-{
-  static struct etimer led_timer;
-
-  PROCESS_BEGIN();
-
-  etimer_set(&led_timer, CLOCK_SECOND/2);
-
-  while(1) {
-    PROCESS_WAIT_EVENT();
-    if(ev == ble_event_interface_added) {
-      etimer_stop(&led_timer);
-      leds_off(LEDS_1);
-      leds_on(LEDS_2);
-    } else if(ev == ble_event_interface_deleted) {
-      etimer_set(&led_timer, CLOCK_SECOND/2);
-      leds_off(LEDS_2);
-    } else if(ev == PROCESS_EVENT_TIMER && etimer_expired(&led_timer)) {
-      etimer_reset(&led_timer);
-      leds_toggle(LEDS_1);
-    }
-  }
-  PROCESS_END();
-}
-#endif
-/*---------------------------------------------------------------------------*/
 /**
  * \brief Board specific initialization
  *
@@ -100,10 +62,6 @@ PROCESS_THREAD(ble_iface_observer, ev, data)
 static void
 board_init(void)
 {
-#ifdef SOFTDEVICE_PRESENT
-  /* Initialize the SoftDevice handler module */
-  SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL);
-#endif
 #ifdef PLATFORM_HAS_BUTTON
   if (!nrf_drv_gpiote_is_init()) {
     nrf_drv_gpiote_init();
@@ -133,30 +91,12 @@ platform_init_stage_two(void)
   serial_line_init();
 #endif
 #endif
-
-#ifdef SOFTDEVICE_PRESENT
-  ble_stack_init();
-  ble_advertising_init(DEVICE_NAME);
-#endif
 }
 /*---------------------------------------------------------------------------*/
 void
 platform_init_stage_three(void)
 {
-#if defined(SOFTDEVICE_PRESENT) && NETSTACK_CONF_WITH_IPV6
-  linkaddr_t linkaddr;
-  ble_get_mac(linkaddr.u8);
-  /* Set link layer address */
-  linkaddr_set_node_addr(&linkaddr);
-  process_start(&ble_iface_observer, NULL);
-#endif
-
   process_start(&sensors_process, NULL);
-
-#ifdef SOFTDEVICE_PRESENT
-  ble_advertising_start();
-  LOG_INFO("Advertising name [%s]\n", DEVICE_NAME);
-#endif
 }
 /*---------------------------------------------------------------------------*/
 void
