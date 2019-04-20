@@ -142,7 +142,7 @@ OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 NRFLIB = $(BUILD_DIR_BOARD)/nrf52832.a
 
-TARGET_LIBS = $(NRFLIB) $(NRF5_SDK_ROOT)/components/iot/ble_6lowpan/lib/ble_6lowpan.a
+TARGET_LIBS = $(NRFLIB)
 
 $(NRFLIB): $(OBJECTS)
 	$(TRACE_AR)
