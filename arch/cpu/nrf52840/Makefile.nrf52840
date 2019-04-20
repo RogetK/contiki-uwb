@@ -11,6 +11,15 @@ ifeq ($(NRF52_JLINK_PATH),)
 endif
 endif
 
+ifeq ($(NRF52840_USE_RTT),1)
+### Suppress the existing debug I/O in os/lib
+MAKE_WITH_LIB_DBG_IO = 0
+CONTIKI_TARGET_DIRS += rtt
+CONTIKI_SOURCEFILES += rtt-printf.c segger-rtt.c segger-rtt-printf.c
+else
+CONTIKI_SOURCEFILES += dbg.c
+endif
+
 # custom MAC: ble_ipsp_mac_driver
 MAKE_MAC ?= MAKE_MAC_OTHER
 

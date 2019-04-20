@@ -6,15 +6,6 @@ CONTIKI_TARGET_DIRS += . dev config
 CONTIKI_SOURCEFILES += platform.c leds-arch.c nrf52dk-sensors.c
 CONTIKI_SOURCEFILES += button-sensor.c temperature-sensor.c
 
-ifeq ($(NRF52_USE_RTT),1)
-### Suppress the existing debug I/O in os/lib
-MAKE_WITH_LIB_DBG_IO = 0
-CONTIKI_TARGET_DIRS += rtt
-CONTIKI_SOURCEFILES += rtt-printf.c segger-rtt.c segger-rtt-printf.c
-else
-CONTIKI_SOURCEFILES += dbg.c
-endif
-
 ### Unless the example dictates otherwise, build with code size optimisations switched off
 SMALL ?= 0
 
