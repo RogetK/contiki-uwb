@@ -2,11 +2,9 @@ ifndef CONTIKI
   $(error CONTIKI not defined! You must specify where CONTIKI resides!)
 endif
 
-### Include the board-specific makefile
-PLATFORM_ROOT_DIR = $(ARCH_PATH)/platform/$(TARGET)
-
 CONTIKI_TARGET_DIRS += . dev config
-CONTIKI_SOURCEFILES += platform.c leds-arch.c nrf52dk-sensors.c button-sensor.c temperature-sensor.c
+CONTIKI_SOURCEFILES += platform.c leds-arch.c nrf52dk-sensors.c
+CONTIKI_SOURCEFILES += button-sensor.c temperature-sensor.c
 
 ifeq ($(NRF52_USE_RTT),1)
 ### Suppress the existing debug I/O in os/lib
@@ -21,5 +19,5 @@ endif
 SMALL ?= 0
 
 ### Define the CPU directory and pull in the correct CPU makefile.
-CONTIKI_CPU=$(ARCH_PATH)/cpu/nrf52832
-include $(CONTIKI_CPU)/Makefile.nrf52832
+CONTIKI_CPU=$(ARCH_PATH)/cpu/nrf52840
+include $(CONTIKI_CPU)/Makefile.nrf52840
