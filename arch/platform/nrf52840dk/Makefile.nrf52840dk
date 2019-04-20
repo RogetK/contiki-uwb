@@ -3,7 +3,7 @@ ifndef CONTIKI
 endif
 
 CONTIKI_TARGET_DIRS += . dev config
-CONTIKI_SOURCEFILES += platform.c leds-arch.c nrf52dk-sensors.c
+CONTIKI_SOURCEFILES += platform.c leds-arch.c nrf52840dk-sensors.c
 CONTIKI_SOURCEFILES += button-sensor.c temperature-sensor.c
 
 ### Unless the example dictates otherwise, build with code size optimisations switched off
