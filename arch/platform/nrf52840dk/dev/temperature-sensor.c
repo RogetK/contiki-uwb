@@ -43,11 +43,7 @@
  *         Wojciech Bober <wojciech.bober@nordicsemi.no>
  *
  */
-#ifndef SOFTDEVICE_PRESENT
 #include "nrf_temp.h"
-#else
-#include "nrf_soc.h"
-#endif
 #include "contiki.h"
 #include "dev/temperature-sensor.h"
 
@@ -63,7 +59,6 @@ const struct sensors_sensor temperature_sensor;
 static int
 value(int type)
 {
-#ifndef SOFTDEVICE_PRESENT
   int32_t volatile temp;
 
   NRF_TEMP->TASKS_START = 1;
@@ -74,11 +69,6 @@ value(int type)
   NRF_TEMP->TASKS_STOP = 1;
 
   return temp;
-#else
-  int32_t temp;
-  sd_temp_get(&temp);
-  return temp >> 2;
-#endif
 }
 /*---------------------------------------------------------------------------*/
 /**
@@ -92,11 +82,9 @@ value(int type)
 static int
 configure(int type, int c)
 {
-#ifndef SOFTDEVICE_PRESENT
   if (type == SENSORS_HW_INIT) {
     nrf_temp_init();
   }
-#endif
   return 1;
 }
 /**
