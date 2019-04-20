@@ -47,7 +47,7 @@ endif
 remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
 
 ### CPU-dependent directories
-CONTIKI_CPU_DIRS += . dev ble #compat
+CONTIKI_CPU_DIRS += . dev
 
 ### CPU-dependent source files
 CONTIKI_CPU_SOURCEFILES += clock.c rtimer-arch.c uart0.c dbg.c watchdog.c
