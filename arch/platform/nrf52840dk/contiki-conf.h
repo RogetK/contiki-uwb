@@ -27,16 +27,7 @@
  * SUCH DAMAGE.
  *
  */
-/**
- * \addtogroup nrf52dk
- * @{
- *
- * \addtogroup nrf52dk-contikic-conf Contiki configuration
- * @{
- *
- * \file
- *  Contiki configuration for the nRF52 DK
- */
+/*---------------------------------------------------------------------------*/
 #ifndef CONTIKI_CONF_H
 #define CONTIKI_CONF_H
 
@@ -49,8 +40,8 @@
 #endif /* PROJECT_CONF_PATH */
 /*---------------------------------------------------------------------------*/
 /* Include platform peripherals configuration */
-#include "nrf52dk-def.h"
-#include "nrf52832-def.h"
+#include "nrf52840dk-def.h"
+#include "nrf52840-def.h"
 /*---------------------------------------------------------------------------*/
 /**
  * \name Network Stack Configuration
