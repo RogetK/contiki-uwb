@@ -1,5 +1,5 @@
-ifndef NRF52_SDK_ROOT
-  $(error NRF52_SDK_ROOT not defined! You must specify where nRF52 SDK resides!)
+ifndef NRF5_SDK_ROOT
+  $(error NRF5_SDK_ROOT not defined! You must specify where nRF52 SDK resides!)
 endif
 
 ifneq ($(filter %.flash erase,$(MAKECMDGOALS)),)
@@ -23,7 +23,7 @@ endif
 # custom MAC: ble_ipsp_mac_driver
 MAKE_MAC ?= MAKE_MAC_OTHER
 
-$(info SDK: $(NRF52_SDK_ROOT))
+$(info SDK: $(NRF5_SDK_ROOT))
 
 ifeq ($(NRF52_DK_REVISION),)
 NRF52_DK_REVISION=pca10040
@@ -31,7 +31,7 @@ endif
 
 ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
   ifeq ($(NRF52_SOFTDEVICE),)
-    NRF52_SOFTDEVICE := $(shell find $(NRF52_SDK_ROOT) -name *iot*_softdevice.hex | head -n 1)
+    NRF52_SOFTDEVICE := $(shell find $(NRF5_SDK_ROOT) -name *iot*_softdevice.hex | head -n 1)
   endif
   $(info SoftDevice: $(NRF52_SOFTDEVICE))
   LDSCRIPT ?= $(CONTIKI_CPU)/ld/nrf52-$(NRF52_DK_REVISION)-sd.ld
@@ -43,7 +43,7 @@ OUTPUT_FILENAME := $(CONTIKI_PROJECT)
 MAKEFILE_NAME := $(MAKEFILE_LIST)
 MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) )
 
-TEMPLATE_PATH = $(NRF52_SDK_ROOT)/components/toolchain/gcc
+TEMPLATE_PATH = $(NRF5_SDK_ROOT)/components/toolchain/gcc
 
 OBJECT_DIRECTORY = $(OBJECTDIR)
 LISTING_DIRECTORY := $(OBJECTDIR)
@@ -73,28 +73,28 @@ endif
 CONTIKI_SOURCEFILES += $(CONTIKI_CPU_SOURCEFILES)
 
 #source common to all targets
-C_SOURCE_FILES += $(NRF52_SDK_ROOT)/components/drivers_nrf/common/nrf_drv_common.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/rtc/nrf_drv_rtc.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/clock/nrf_drv_clock.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/timer/nrf_drv_timer.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/wdt/nrf_drv_wdt.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/rng/nrf_drv_rng.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/delay/nrf_delay.c \
-                  $(NRF52_SDK_ROOT)/components/drivers_nrf/uart/nrf_drv_uart.c \
-                  $(NRF52_SDK_ROOT)/components/libraries/util/app_error.c \
-                  $(NRF52_SDK_ROOT)/components/toolchain/system_nrf52.c
+C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/drivers_nrf/common/nrf_drv_common.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/rtc/nrf_drv_rtc.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/clock/nrf_drv_clock.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/timer/nrf_drv_timer.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/wdt/nrf_drv_wdt.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/rng/nrf_drv_rng.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/delay/nrf_delay.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/uart/nrf_drv_uart.c \
+                  $(NRF5_SDK_ROOT)/components/libraries/util/app_error.c \
+                  $(NRF5_SDK_ROOT)/components/toolchain/system_nrf52.c
 
 ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-C_SOURCE_FILES += $(NRF52_SDK_ROOT)/components/softdevice/common/softdevice_handler/softdevice_handler.c \
-                  $(NRF52_SDK_ROOT)/components/ble/common/ble_advdata.c
+C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/softdevice/common/softdevice_handler/softdevice_handler.c \
+                  $(NRF5_SDK_ROOT)/components/ble/common/ble_advdata.c
 else
-C_SOURCE_FILES += $(NRF52_SDK_ROOT)/components/libraries/fifo/app_fifo.c \
-                  $(NRF52_SDK_ROOT)/components/libraries/util/app_util_platform.c
+C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/libraries/fifo/app_fifo.c \
+                  $(NRF5_SDK_ROOT)/components/libraries/util/app_util_platform.c
 endif
 
 #assembly files common to all targets
-ASM_SOURCE_FILES  = $(NRF52_SDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf52.s
+ASM_SOURCE_FILES  = $(NRF5_SDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf52.s
 
 #includes common to all targets
 INC_PATHS += components/drivers_nrf/gpiote
@@ -127,7 +127,7 @@ INC_PATHS += components/drivers_nrf/nrf_soc_nosd
 INC_PATHS += components/libraries/fifo
 endif
 
-EXTERNALDIRS += $(addprefix $(NRF52_SDK_ROOT)/, $(INC_PATHS))
+EXTERNALDIRS += $(addprefix $(NRF5_SDK_ROOT)/, $(INC_PATHS))
 
 # Sorting removes duplicates
 BUILD_DIRECTORIES := $(sort $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY))
@@ -183,7 +183,7 @@ OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
 
 NRFLIB = $(BUILD_DIR_BOARD)/nrf52832.a
 
-TARGET_LIBS = $(NRFLIB) $(NRF52_SDK_ROOT)/components/iot/ble_6lowpan/lib/ble_6lowpan.a
+TARGET_LIBS = $(NRFLIB) $(NRF5_SDK_ROOT)/components/iot/ble_6lowpan/lib/ble_6lowpan.a
 
 $(NRFLIB): $(OBJECTS)
 	$(TRACE_AR)
@@ -192,7 +192,7 @@ $(NRFLIB): $(OBJECTS)
 # Assemble files
 $(OBJECT_DIRECTORY)/%.o: %.s
 	$(TRACE_CC)
-	$(Q)$(CC) $(ASMFLAGS) $(addprefix -I$(NRF52_SDK_ROOT)/, $(INC_PATHS)) -c -o $@ $<
+	$(Q)$(CC) $(ASMFLAGS) $(addprefix -I$(NRF5_SDK_ROOT)/, $(INC_PATHS)) -c -o $@ $<
 
 include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
 
