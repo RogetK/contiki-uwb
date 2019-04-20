@@ -20,9 +20,6 @@ else
 CONTIKI_SOURCEFILES += dbg.c
 endif
 
-# custom MAC: ble_ipsp_mac_driver
-MAKE_MAC ?= MAKE_MAC_OTHER
-
 ifeq ($(NRF52_DK_REVISION),)
 NRF52_DK_REVISION=pca10040
 endif
