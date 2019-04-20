@@ -1,4 +1,4 @@
 /**
- * \defgroup nrf52dk nRF52 Development Kit
+ * \defgroup nrf52840dk nRF52840 Development Kit
  * \ingroup platform
  */
