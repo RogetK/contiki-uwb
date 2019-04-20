@@ -52,7 +52,7 @@
 
 #include "dev/serial-line.h"
 #include "dev/uart0.h"
-#include "dev/lpm.h"
+#include "lpm.h"
 /*---------------------------------------------------------------------------*/
 /* Log configuration */
 #include "sys/log.h"
