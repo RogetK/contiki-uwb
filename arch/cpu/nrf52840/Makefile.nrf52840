@@ -94,9 +94,6 @@ INC_PATHS += components/libraries/fifo
 
 EXTERNALDIRS += $(addprefix $(NRF5_SDK_ROOT)/, $(INC_PATHS))
 
-# Sorting removes duplicates
-BUILD_DIRECTORIES := $(sort $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY))
-
 CFLAGS += -DNRF52
 CFLAGS += -DBOARD_NRF52840DK
 CFLAGS += -DBOARD_PCA10040
