@@ -68,13 +68,8 @@ C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/drivers_nrf/common/nrf_drv_common.
                   $(NRF5_SDK_ROOT)/components/libraries/util/app_error.c \
                   $(NRF5_SDK_ROOT)/components/toolchain/system_nrf52.c
 
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/softdevice/common/softdevice_handler/softdevice_handler.c \
-                  $(NRF5_SDK_ROOT)/components/ble/common/ble_advdata.c
-else
 C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/libraries/fifo/app_fifo.c \
                   $(NRF5_SDK_ROOT)/components/libraries/util/app_util_platform.c
-endif
 
 #assembly files common to all targets
 ASM_SOURCE_FILES  = $(NRF5_SDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf52.s
@@ -98,28 +93,13 @@ INC_PATHS += components/toolchain/gcc
 INC_PATHS += components/toolchain
 INC_PATHS += examples/bsp
 
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-INC_PATHS += components/softdevice/s1xx_iot/headers
-INC_PATHS += components/softdevice/s1xx_iot/headers/nrf52
-INC_PATHS += components/softdevice/common/softdevice_handler
-INC_PATHS += components/ble/common
-INC_PATHS += components/iot/common
-INC_PATHS += components/iot/ble_ipsp
-else
 INC_PATHS += components/drivers_nrf/nrf_soc_nosd
 INC_PATHS += components/libraries/fifo
-endif
 
 EXTERNALDIRS += $(addprefix $(NRF5_SDK_ROOT)/, $(INC_PATHS))
 
 # Sorting removes duplicates
 BUILD_DIRECTORIES := $(sort $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY))
-
-#flags common to all targets
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-CFLAGS += -DSOFTDEVICE_PRESENT
-CFLAGS += -DS132
-endif
 
 CFLAGS += -DNRF52
 CFLAGS += -DBOARD_$(shell echo $(NRF52_DK_REVISION) | tr a-z A-Z)
@@ -140,10 +120,6 @@ LDFLAGS += -Wl,--gc-sections
 LDFLAGS += --specs=nano.specs -lc -lnosys
 
 # Assembler flags
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-ASMFLAGS += -DSOFTDEVICE_PRESENT
-ASMFLAGS += -DS132
-endif
 ASMFLAGS += -x assembler-with-cpp
 ASMFLAGS += -DSWI_DISABLE0
 ASMFLAGS += -DNRF52
