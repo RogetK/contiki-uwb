@@ -194,14 +194,5 @@ include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
 	@echo Flashing: $^
 	$(JLINK) $(JLINK_OPTS) -CommanderScript $*.jlink
 
-softdevice.jlink:
-	sed -e 's,#OUTPUT_FILENAME#,$(NRF52_SOFTDEVICE),' $(CONTIKI_CPU)/flash.jlink > $@
-
-softdevice.flash: softdevice.jlink
-	@echo Flashing: $(notdir $(NRF52_SOFTDEVICE))
-	$(JLINK) $(JLINK_OPTS) -CommanderScript $^
-
 erase:
 	$(JLINK) $(JLINK_OPTS) -CommanderScript $(CONTIKI_CPU)/erase.jlink
-
-.PHONY: softdevice.jlink
