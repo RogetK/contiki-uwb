@@ -74,19 +74,6 @@ rtc_handler(nrf_drv_rtc_int_type_t int_type)
   }
 }
 
-#ifndef SOFTDEVICE_PRESENT
-/** \brief Function starting the internal LFCLK XTAL oscillator.
- */
-static void
-lfclk_config(void)
-{
-  ret_code_t err_code = nrf_drv_clock_init(NULL);
-  APP_ERROR_CHECK(err_code);
-
-  nrf_drv_clock_lfclk_request();
-}
-#endif
-
 /**
  * \brief Function initialization and configuration of RTC driver instance.
  */
@@ -110,9 +97,6 @@ void
 clock_init(void)
 {
   ticks = 0;
-#ifndef SOFTDEVICE_PRESENT
-  lfclk_config();
-#endif
   rtc_config();
 }
 /*---------------------------------------------------------------------------*/
