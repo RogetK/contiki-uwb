@@ -1,0 +1,14 @@
+ifndef CONTIKI
+  $(error CONTIKI not defined! You must specify where CONTIKI resides!)
+endif
+
+CONTIKI_TARGET_DIRS += . dev config
+CONTIKI_SOURCEFILES += platform.c leds-arch.c nrf52840dk-sensors.c
+CONTIKI_SOURCEFILES += button-sensor.c temperature-sensor.c
+
+### Unless the example dictates otherwise, build with code size optimisations switched off
+SMALL ?= 0
+
+### Define the CPU directory and pull in the correct CPU makefile.
+CONTIKI_CPU=$(ARCH_PATH)/cpu/nrf52840
+include $(CONTIKI_CPU)/Makefile.nrf52840

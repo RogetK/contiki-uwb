@@ -1,0 +1,161 @@
+ifndef NRF5_SDK_ROOT
+  $(error NRF5_SDK_ROOT not defined! You must specify where nRF52 SDK resides!)
+endif
+
+ifneq ($(filter %.flash erase,$(MAKECMDGOALS)),)
+ifeq ($(NRF52_JLINK_PATH),)
+NRF52_JLINK_PATH=$(shell location=$$(which JLinkExe) && dirname $$location)
+endif
+ifeq ($(NRF52_JLINK_PATH),)
+  $(error JLink not found in PATH and NRF52_JLINK_PATH path is not defined)
+endif
+endif
+
+ifeq ($(NRF52840_USE_RTT),1)
+### Suppress the existing debug I/O in os/lib
+MAKE_WITH_LIB_DBG_IO = 0
+CONTIKI_TARGET_DIRS += rtt
+CONTIKI_CPU_SOURCEFILES += rtt-printf.c segger-rtt.c segger-rtt-printf.c
+else
+CONTIKI_CPU_SOURCEFILES += dbg.c
+endif
+
+LDSCRIPT ?= $(CONTIKI_CPU)/ld/nrf52840.ld
+
+OUTPUT_FILENAME := $(CONTIKI_PROJECT)
+MAKEFILE_NAME := $(MAKEFILE_LIST)
+MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) )
+
+TEMPLATE_PATH = $(NRF5_SDK_ROOT)/components/toolchain/gcc
+
+OBJECT_DIRECTORY = $(OBJECTDIR)
+LISTING_DIRECTORY := $(OBJECTDIR)
+OUTPUT_BINARY_DIRECTORY := bin_$(TARGET)
+
+# JLink
+JLINK := $(NRF52_JLINK_PATH)/JLinkExe
+JLINK_OPTS = -Device NRF52 -if swd -speed 1000
+ifneq ($(NRF52_JLINK_SN),)
+JLINK_OPTS += -SelectEmuBySN $(NRF52_JLINK_SN)
+endif
+
+#function for removing duplicates in a list
+remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
+
+### CPU-dependent directories
+CONTIKI_CPU_DIRS += . dev
+
+### CPU-dependent source files
+CONTIKI_CPU_SOURCEFILES += clock.c rtimer-arch.c uart0.c dbg.c watchdog.c
+CONTIKI_CPU_SOURCEFILES += int-master.c
+
+CONTIKI_SOURCEFILES += $(CONTIKI_CPU_SOURCEFILES)
+
+#source common to all targets
+C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/drivers_nrf/common/nrf_drv_common.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/rtc/nrf_drv_rtc.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/clock/nrf_drv_clock.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/timer/nrf_drv_timer.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/wdt/nrf_drv_wdt.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/rng/nrf_drv_rng.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/delay/nrf_delay.c \
+                  $(NRF5_SDK_ROOT)/components/drivers_nrf/uart/nrf_drv_uart.c \
+                  $(NRF5_SDK_ROOT)/components/libraries/util/app_error.c \
+                  $(NRF5_SDK_ROOT)/components/toolchain/system_nrf52.c
+
+C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/libraries/fifo/app_fifo.c \
+                  $(NRF5_SDK_ROOT)/components/libraries/util/app_util_platform.c
+
+#assembly files common to all targets
+ASM_SOURCE_FILES  = $(NRF5_SDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf52.s
+
+#includes common to all targets
+INC_PATHS += components/drivers_nrf/gpiote
+INC_PATHS += components/drivers_nrf/hal
+INC_PATHS += components/drivers_nrf/config
+INC_PATHS += components/drivers_nrf/delay
+INC_PATHS += components/drivers_nrf/uart
+INC_PATHS += components/drivers_nrf/common
+INC_PATHS += components/drivers_nrf/rtc
+INC_PATHS += components/drivers_nrf/wdt
+INC_PATHS += components/drivers_nrf/rng
+INC_PATHS += components/drivers_nrf/clock
+INC_PATHS += components/drivers_nrf/timer
+INC_PATHS += components/libraries/util
+INC_PATHS += components/libraries/timer
+INC_PATHS += components/device
+INC_PATHS += components/toolchain/gcc
+INC_PATHS += components/toolchain
+INC_PATHS += examples/bsp
+
+INC_PATHS += components/drivers_nrf/nrf_soc_nosd
+INC_PATHS += components/libraries/fifo
+
+EXTERNALDIRS += $(addprefix $(NRF5_SDK_ROOT)/, $(INC_PATHS))
+
+CFLAGS += -DNRF52
+CFLAGS += -DBOARD_NRF52840DK
+CFLAGS += -DBOARD_PCA10040
+CFLAGS += -D__HEAP_SIZE=512
+CFLAGS += -DSWI_DISABLE0
+CFLAGS += -DCONFIG_GPIO_AS_PINRESET
+CFLAGS += -DBLE_STACK_SUPPORT_REQD
+CFLAGS += -ggdb
+CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
+# keep every function in separate section. This will allow linker to dump unused functions
+LDFLAGS += -Xlinker -Map=$(CONTIKI_NG_PROJECT_MAP)
+LDFLAGS += -mabi=aapcs -L $(TEMPLATE_PATH)
+LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+# let linker to dump unused sections
+LDFLAGS += -Wl,--gc-sections
+# use newlib in nano version
+LDFLAGS += --specs=nano.specs -lc -lnosys
+
+# Assembler flags
+ASMFLAGS += -x assembler-with-cpp
+ASMFLAGS += -DSWI_DISABLE0
+ASMFLAGS += -DNRF52
+ASMFLAGS += -DBOARD_NRF52840DK
+ASMFLAGS += -DBOARD_PCA10040
+ASMFLAGS += -DCONFIG_GPIO_AS_PINRESET
+ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
+
+C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
+C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
+C_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
+
+ASM_SOURCE_FILE_NAMES = $(notdir $(ASM_SOURCE_FILES))
+ASM_PATHS = $(call remduplicates, $(dir $(ASM_SOURCE_FILES) ))
+ASM_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(ASM_SOURCE_FILE_NAMES:.s=.o) )
+
+vpath %.c $(C_PATHS)
+vpath %.s $(ASM_PATHS)
+
+OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
+
+NRFLIB = $(BUILD_DIR_BOARD)/nrf52832.a
+
+TARGET_LIBS = $(NRFLIB)
+
+$(NRFLIB): $(OBJECTS)
+	$(TRACE_AR)
+	$(Q)$(AR) $(AROPTS) $@ $^
+
+# Assemble files
+$(OBJECT_DIRECTORY)/%.o: %.s
+	$(TRACE_CC)
+	$(Q)$(CC) $(ASMFLAGS) $(addprefix -I$(NRF5_SDK_ROOT)/, $(INC_PATHS)) -c -o $@ $<
+
+include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
+
+%.jlink: $(OUT_HEX)
+	sed -e 's,#OUTPUT_FILENAME#,$<,' $(CONTIKI_CPU)/flash.jlink > $@
+
+%.flash: %.jlink
+	@echo Flashing: $^
+	$(JLINK) $(JLINK_OPTS) -CommanderScript $*.jlink
+
+erase:
+	$(JLINK) $(JLINK_OPTS) -CommanderScript $(CONTIKI_CPU)/erase.jlink
