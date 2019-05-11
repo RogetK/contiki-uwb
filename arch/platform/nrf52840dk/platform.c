@@ -41,6 +41,7 @@
 #include "contiki-net.h"
 #include "leds.h"
 #include "lib/sensors.h"
+#include "dev/button-sensor.h"
 
 #include "dev/serial-line.h"
 #include "dev/uart0.h"
@@ -90,6 +91,11 @@ void
 platform_init_stage_three(void)
 {
   process_start(&sensors_process, NULL);
+
+  SENSORS_ACTIVATE(button_1);
+  SENSORS_ACTIVATE(button_2);
+  SENSORS_ACTIVATE(button_3);
+  SENSORS_ACTIVATE(button_4);
 }
 /*---------------------------------------------------------------------------*/
 void
