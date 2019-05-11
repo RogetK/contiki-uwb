@@ -100,12 +100,14 @@ EXTERNALDIRS += $(addprefix $(NRF5_SDK_ROOT)/, $(NRF52_SDK_INC_PATHS))
 
 include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
 
+JLINK_DIR = $(CONTIKI_CPU)/jlink
+
 %.jlink: $(OUT_HEX)
-	sed -e 's,#OUTPUT_FILENAME#,$<,' $(CONTIKI_CPU)/flash.jlink > $@
+	sed -e 's,#OUTPUT_FILENAME#,$<,' $(JLINK_DIR)/flash.jlink > $@
 
 %.flash: %.jlink
 	@echo Flashing: $^
 	$(JLINK) $(JLINK_OPTS) -CommanderScript $*.jlink
 
 erase:
-	$(JLINK) $(JLINK_OPTS) -CommanderScript $(CONTIKI_CPU)/erase.jlink
+	$(JLINK) $(JLINK_OPTS) -CommanderScript $(JLINK_DIR)/erase.jlink
