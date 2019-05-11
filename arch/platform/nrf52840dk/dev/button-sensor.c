@@ -39,11 +39,12 @@
  *         Driver for nRF52 DK buttons.
  * \author
  *         Wojciech Bober <wojciech.bober@nordicsemi.no>
+ *         Zhitao He <zhitao.he@assaabloy.com>
  */
 /*---------------------------------------------------------------------------*/
 #include <stdint.h>
 #include "nordic_common.h"
-#include "nrf_drv_gpiote.h"
+#include "nrfx_gpiote.h"
 #include "nrf_assert.h"
 #include "boards.h"
 #include "contiki.h"
@@ -72,9 +73,9 @@ static int btn_state = 0;
  *
  */
 static void
-gpiote_event_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+gpiote_event_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-  int id = pin - BUTTON_START;
+  int id = bsp_board_pin_to_button_idx(pin);
 
   if(!timer_expired(&(btn_timer[id].debounce))) {
     return;
@@ -88,7 +89,7 @@ gpiote_event_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
   /*
    * Start measuring duration on falling edge, stop on rising edge.
    */
-  if(nrf_drv_gpiote_in_is_set(pin) == 0) {
+  if(nrfx_gpiote_in_is_set(pin) == 0) {
     btn_timer[id].start = clock_time();
     btn_timer[id].duration = 0;
   } else {
@@ -108,24 +109,24 @@ gpiote_event_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
  * \param pin  GPIOE pin number
  */
 static int
-config(int type, int c, nrf_drv_gpiote_pin_t pin)
+config(int type, int c, nrfx_gpiote_pin_t pin)
 {
-  int id = pin - BUTTON_START;
+  int id = bsp_board_pin_to_button_idx(pin);
 
   switch(type) {
     case SENSORS_HW_INIT: {
-      nrf_drv_gpiote_in_config_t config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(false);
+      nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(false);
       config.pull = NRF_GPIO_PIN_PULLUP;
-      nrf_drv_gpiote_in_init(pin, &config, gpiote_event_handler);
+      nrfx_gpiote_in_init(pin, &config, gpiote_event_handler);
       timer_set(&(btn_timer[id].debounce), DEBOUNCE_DURATION);
       return 1;
     }
     case SENSORS_ACTIVE: {
       if(c) {
-        nrf_drv_gpiote_in_event_enable(pin, true);
+        nrfx_gpiote_in_event_enable(pin, true);
         btn_state |= (1 << id);
       } else {
-        nrf_drv_gpiote_in_event_disable(pin);
+        nrfx_gpiote_in_event_disable(pin);
         btn_state &= ~(1 << id);
       }
       return 1;
@@ -198,14 +199,14 @@ config_button_4(int type, int value)
  * \retval duration Active state duration in clock ticks
  */
 static int
-value(int type, nrf_drv_gpiote_pin_t pin)
+value(int type, nrfx_gpiote_pin_t pin)
 {
 
   if(type == BUTTON_SENSOR_VALUE_STATE) {
-    return nrf_drv_gpiote_in_is_set(pin) == 0 ?
+    return nrfx_gpiote_in_is_set(pin) == 0 ?
            BUTTON_SENSOR_VALUE_PRESSED : BUTTON_SENSOR_VALUE_RELEASED;
   } else if(type == BUTTON_SENSOR_VALUE_DURATION) {
-    return btn_timer[pin - BUTTON_START].duration;
+    return btn_timer[bsp_board_pin_to_button_idx(pin)].duration;
   }
 
   return 0;
@@ -262,12 +263,12 @@ value_button_4(int type)
  * \return 1 if the button's port interrupt is enabled
  */
 static int
-status(int type, nrf_drv_gpiote_pin_t pin)
+status(int type, nrfx_gpiote_pin_t pin)
 {
   switch(type) {
     case SENSORS_ACTIVE:
     case SENSORS_READY:
-      return (btn_state & (1 << (pin - BUTTON_START)));
+      return (btn_state & (1 << (bsp_board_pin_to_button_idx(pin))));
     default:
       break;
   }

@@ -82,7 +82,7 @@ value(int type)
 static int
 configure(int type, int c)
 {
-  if (type == SENSORS_HW_INIT) {
+  if(type == SENSORS_HW_INIT) {
     nrf_temp_init();
   }
   return 1;

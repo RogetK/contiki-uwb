@@ -48,39 +48,19 @@
  *
  * @{
  */
-
-/* Select the BLE mac driver */
-#if MAC_CONF_WITH_OTHER
-#define NETSTACK_CONF_MAC     ble_ipsp_mac_driver
-#endif
+#define NETSTACK_CONF_RADIO     nullradio_driver
 
 /* 6LoWPAN */
 #define SICSLOWPAN_CONF_MAC_MAX_PAYLOAD         1280
 
 #ifndef SICSLOWPAN_CONF_FRAG
-#define SICSLOWPAN_CONF_FRAG                    0     /**< We don't use 6LoWPAN fragmentation as IPSP takes care of that for us.*/
+#define SICSLOWPAN_CONF_FRAG                    1
 #endif
-
-#define SICSLOWPAN_FRAMER_HDRLEN                0     /**< Use fixed header len rather than framer.length() function */
 
 /* Packet buffer */
 #define PACKETBUF_CONF_SIZE                     1280  /**< Required IPv6 MTU size */
 
-/* Queuebuf */
-#define QUEUEBUF_CONF_ENABLED                   0
-
 /** @} */
-
-/**
- * \name BLE configuration
- * @{
- */
-#ifndef DEVICE_NAME
-#define DEVICE_NAME "Contiki nRF52dk"  /**< Device name used in BLE undirected advertisement. */
-#endif
-/**
- * @}
- */
 
 /**
  * \name IPv6 network buffer configuration
