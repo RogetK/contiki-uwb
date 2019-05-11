@@ -102,7 +102,7 @@ include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
 
 JLINK_DIR = $(CONTIKI_CPU)/jlink
 
-%.jlink: $(OUT_HEX)
+%.jlink: $(OUT_HEX) %.$(TARGET)
 	sed -e 's,#OUTPUT_FILENAME#,$<,' $(JLINK_DIR)/flash.jlink > $@
 
 %.flash: %.jlink
