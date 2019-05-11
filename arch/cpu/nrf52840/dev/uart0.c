@@ -65,13 +65,13 @@ static nrfx_uart_t uart_inst = NRFX_UART_INSTANCE(0);
 static void
 uart_event_handler(const nrfx_uart_event_t * p_event, void * p_context)
 {
-  if (p_event->type == NRFX_UART_EVT_RX_DONE) {
-    if (uart0_input_handler != NULL) {
+  if(p_event->type == NRFX_UART_EVT_RX_DONE) {
+    if(uart0_input_handler != NULL) {
       uart0_input_handler(p_event->data.rxtx.p_data[0]);
     }
     (void)nrfx_uart_rx(&uart_inst, rx_buffer, 1);
-  } else if (p_event->type == NRFX_UART_EVT_TX_DONE) {
-    if (ringbuf_elements(&txbuf) > 0) {
+  } else if(p_event->type == NRFX_UART_EVT_TX_DONE) {
+    if(ringbuf_elements(&txbuf) > 0) {
       uint8_t c = ringbuf_get(&txbuf);
       nrfx_uart_tx(&uart_inst, &c, 1);
     }
@@ -92,8 +92,8 @@ uart0_set_input(int (*input)(unsigned char c))
 void
 uart0_writeb(unsigned char c)
 {
-  if (nrfx_uart_tx(&uart_inst, &c, 1) == NRF_ERROR_BUSY) {
-    while (ringbuf_put(&txbuf, c) == 0) {
+  if(nrfx_uart_tx(&uart_inst, &c, 1) == NRF_ERROR_BUSY) {
+    while(ringbuf_put(&txbuf, c) == 0) {
       __WFE();
     }
   }
