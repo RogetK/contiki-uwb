@@ -48,6 +48,7 @@ CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 LDFLAGS += -mabi=aapcs -mfloat-abi=hard -mfpu=fpv4-sp-d16
 LDFLAGS += --specs=nano.specs -lc -lnosys
+LDFLAGS += -L $(NRF5_SDK_ROOT)/modules/nrfx/mdk
 
 #nRF52 SDK sources
 NRF52_SDK_C_SRCS += components/boards/boards.c \
