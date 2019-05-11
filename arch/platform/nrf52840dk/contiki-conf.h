@@ -48,8 +48,6 @@
  *
  * @{
  */
-#define NETSTACK_CONF_RADIO     nullradio_driver
-
 /* 6LoWPAN */
 #define SICSLOWPAN_CONF_MAC_MAX_PAYLOAD         1280
 
