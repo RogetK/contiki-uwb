@@ -4,7 +4,7 @@ endif
 
 ifneq ($(filter %.flash erase,$(MAKECMDGOALS)),)
 ifeq ($(NRF52_JLINK_PATH),)
-NRF52_JLINK_PATH=$(shell location=$$(which JLinkExe) && dirname $$location)
+NRF52_JLINK_PATH:=$(shell location=$$(which JLinkExe) && dirname $$location)
 endif
 ifeq ($(NRF52_JLINK_PATH),)
   $(error JLink not found in PATH and NRF52_JLINK_PATH path is not defined)
