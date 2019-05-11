@@ -11,6 +11,8 @@ ifeq ($(NRF52_JLINK_PATH),)
 endif
 endif
 
+CLEAN += *.jlink
+
 ifeq ($(NRF52840_USE_RTT),1)
 ### Suppress the existing debug I/O in os/lib
 MAKE_WITH_LIB_DBG_IO = 0
