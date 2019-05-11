@@ -1,5 +1,5 @@
-ifndef NRF5_SDK_ROOT
-  $(error NRF5_SDK_ROOT not defined! You must specify where nRF52 SDK resides!)
+ifndef NRF52_SDK_ROOT
+  $(error NRF52_SDK_ROOT not defined! You must specify where nRF52 SDK resides!)
 endif
 
 ifneq ($(filter %.flash erase,$(MAKECMDGOALS)),)
@@ -26,7 +26,7 @@ OUTPUT_FILENAME := $(CONTIKI_PROJECT)
 MAKEFILE_NAME := $(MAKEFILE_LIST)
 MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) )
 
-TEMPLATE_PATH = $(NRF5_SDK_ROOT)/components/toolchain/gcc
+TEMPLATE_PATH = $(NRF52_SDK_ROOT)/components/toolchain/gcc
 
 # JLink
 JLINK := $(NRF52_JLINK_PATH)/JLinkExe
