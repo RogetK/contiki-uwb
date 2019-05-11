@@ -105,13 +105,6 @@ LDFLAGS += -Wl,--gc-sections
 # use newlib in nano version
 LDFLAGS += --specs=nano.specs -lc -lnosys
 
-# Assembler flags
-ASMFLAGS += -x assembler-with-cpp
-ASMFLAGS += -DSWI_DISABLE0
-ASMFLAGS += -DNRF52
-ASMFLAGS += -DBOARD_NRF52840DK
-ASMFLAGS += -DCONFIG_GPIO_AS_PINRESET
-
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
 C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
 C_OBJECTS = $(addprefix $(OBJECTDIR)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
