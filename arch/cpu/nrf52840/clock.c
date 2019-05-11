@@ -47,7 +47,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "nrf.h"
-#include "nrf_drv_config.h"
+#include "sdk_config.h"
 #include "nrf_drv_rtc.h"
 #include "nrf_drv_clock.h"
 #include "nrf_delay.h"
@@ -74,6 +74,16 @@ rtc_handler(nrf_drv_rtc_int_type_t int_type)
   }
 }
 
+/** \brief Function starting the internal LFCLK XTAL oscillator.
+ */
+static void
+lfclk_config(void)
+{
+  ret_code_t err_code = nrf_drv_clock_init();
+  APP_ERROR_CHECK(err_code);
+  nrf_drv_clock_lfclk_request(NULL);
+}
+
 /**
  * \brief Function initialization and configuration of RTC driver instance.
  */
@@ -83,7 +93,12 @@ rtc_config(void)
   uint32_t err_code;
 
   //Initialize RTC instance
-  err_code = nrf_drv_rtc_init(&rtc, NULL, rtc_handler);
+  nrf_drv_rtc_config_t config = NRF_DRV_RTC_DEFAULT_CONFIG;
+  config.prescaler = 255;
+  config.interrupt_priority = 6;
+  config.reliable = 0;
+
+  err_code = nrf_drv_rtc_init(&rtc, &config, rtc_handler);
   APP_ERROR_CHECK(err_code);
 
   //Enable tick event & interrupt
@@ -97,6 +112,7 @@ void
 clock_init(void)
 {
   ticks = 0;
+  lfclk_config();
   rtc_config();
 }
 /*---------------------------------------------------------------------------*/
@@ -110,7 +126,7 @@ void
 clock_update(void)
 {
   ticks++;
-  if (etimer_pending()) {
+  if(etimer_pending()) {
     etimer_request_poll();
   }
 }
