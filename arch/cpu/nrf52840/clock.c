@@ -69,7 +69,7 @@ void clock_update(void);
 static void
 rtc_handler(nrf_drv_rtc_int_type_t int_type)
 {
-  if (int_type == NRF_DRV_RTC_INT_TICK) {
+  if(int_type == NRF_DRV_RTC_INT_TICK) {
     clock_update();
   }
 }
