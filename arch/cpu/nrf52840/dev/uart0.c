@@ -82,6 +82,11 @@ void
 uart0_set_input(int (*input)(unsigned char c))
 {
   uart0_input_handler = input;
+
+  if(input != NULL) {
+    nrfx_uart_rx_enable(&uart_inst);
+    nrfx_uart_rx(&uart_inst, rx_buffer, 1);
+  }
 }
 /*---------------------------------------------------------------------------*/
 void
