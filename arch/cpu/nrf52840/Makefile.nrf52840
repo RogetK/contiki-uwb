@@ -28,8 +28,6 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_NAME) )
 
 TEMPLATE_PATH = $(NRF5_SDK_ROOT)/components/toolchain/gcc
 
-OUTPUT_BINARY_DIRECTORY := bin_$(TARGET)
-
 # JLink
 JLINK := $(NRF52_JLINK_PATH)/JLinkExe
 JLINK_OPTS = -Device NRF52 -if swd -speed 1000
@@ -122,11 +120,11 @@ ASMFLAGS += -DBLE_STACK_SUPPORT_REQD
 
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
 C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
-C_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
+C_OBJECTS = $(addprefix $(OBJECTDIR)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
 
 ASM_SOURCE_FILE_NAMES = $(notdir $(ASM_SOURCE_FILES))
 ASM_PATHS = $(call remduplicates, $(dir $(ASM_SOURCE_FILES) ))
-ASM_OBJECTS = $(addprefix $(OBJECT_DIRECTORY)/, $(ASM_SOURCE_FILE_NAMES:.s=.o) )
+ASM_OBJECTS = $(addprefix $(OBJECTDIR)/, $(ASM_SOURCE_FILE_NAMES:.s=.o) )
 
 vpath %.c $(C_PATHS)
 vpath %.s $(ASM_PATHS)
@@ -142,7 +140,7 @@ $(NRFLIB): $(OBJECTS)
 	$(Q)$(AR) $(AROPTS) $@ $^
 
 # Assemble files
-$(OBJECT_DIRECTORY)/%.o: %.s
+$(OBJECTDIR)/%.o: %.s
 	$(TRACE_CC)
 	$(Q)$(CC) $(ASMFLAGS) $(addprefix -I$(NRF5_SDK_ROOT)/, $(INC_PATHS)) -c -o $@ $<
 
