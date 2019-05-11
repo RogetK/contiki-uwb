@@ -135,11 +135,6 @@ $(NRFLIB): $(OBJECTS)
 	$(TRACE_AR)
 	$(Q)$(AR) $(AROPTS) $@ $^
 
-# Assemble files
-$(OBJECTDIR)/%.o: %.s
-	$(TRACE_CC)
-	$(Q)$(CC) $(ASMFLAGS) $(addprefix -I$(NRF5_SDK_ROOT)/, $(INC_PATHS)) -c -o $@ $<
-
 include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
 
 %.jlink: $(OUT_HEX)
