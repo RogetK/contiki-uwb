@@ -32,14 +32,11 @@
  * \addtogroup nrf52dk nRF52 Development Kit
  * @{
  */
-#include <stdio.h>
-#include <stdint.h>
-
-#include "nordic_common.h"
 #include "contiki.h"
+#include "nordic_common.h"
 
-#include "nrf_drv_config.h"
-#include "nrf_drv_gpiote.h"
+#include "sdk_config.h"
+#include "nrfx_gpiote.h"
 
 #include "contiki-net.h"
 #include "leds.h"
@@ -48,23 +45,21 @@
 #include "dev/serial-line.h"
 #include "dev/uart0.h"
 #include "lpm.h"
+
+#include <stdio.h>
+#include <stdint.h>
 /*---------------------------------------------------------------------------*/
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "NRF52DK"
 #define LOG_LEVEL LOG_LEVEL_MAIN
 /*---------------------------------------------------------------------------*/
-/**
- * \brief Board specific initialization
- *
- * This function will enable SoftDevice is present.
- */
 static void
 board_init(void)
 {
 #ifdef PLATFORM_HAS_BUTTON
-  if (!nrf_drv_gpiote_is_init()) {
-    nrf_drv_gpiote_init();
+  if(!nrfx_gpiote_is_init()) {
+    nrfx_gpiote_init();
   }
 #endif
 }
@@ -82,13 +77,11 @@ platform_init_stage_two(void)
   // Seed value is ignored since hardware RNG is used.
   random_init(0);
 
-#ifdef UART0_ENABLED
+#if UART0_ENABLED
   uart0_init();
-#if SLIP_ARCH_CONF_ENABLE
-  #error Platform does not support SLIP
-#else
-  uart0_set_input(serial_line_input_byte);
   serial_line_init();
+#if BUILD_WITH_SHELL
+  uart0_set_input(serial_line_input_byte);
 #endif
 #endif
 }
