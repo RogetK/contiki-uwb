@@ -29,9 +29,6 @@ ifneq ($(NRF52_JLINK_SN),)
 JLINK_OPTS += -SelectEmuBySN $(NRF52_JLINK_SN)
 endif
 
-#function for removing duplicates in a list
-remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
-
 ### CPU-dependent directories
 CONTIKI_CPU_DIRS += . dev
 
@@ -40,49 +37,6 @@ CONTIKI_CPU_SOURCEFILES += clock.c rtimer-arch.c uart0.c dbg.c watchdog.c
 CONTIKI_CPU_SOURCEFILES += int-master.c
 
 CONTIKI_SOURCEFILES += $(CONTIKI_CPU_SOURCEFILES)
-
-#source common to all targets
-C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/drivers_nrf/common/nrf_drv_common.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/gpiote/nrf_drv_gpiote.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/rtc/nrf_drv_rtc.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/clock/nrf_drv_clock.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/timer/nrf_drv_timer.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/wdt/nrf_drv_wdt.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/rng/nrf_drv_rng.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/delay/nrf_delay.c \
-                  $(NRF5_SDK_ROOT)/components/drivers_nrf/uart/nrf_drv_uart.c \
-                  $(NRF5_SDK_ROOT)/components/libraries/util/app_error.c \
-                  $(NRF5_SDK_ROOT)/components/toolchain/system_nrf52.c
-
-C_SOURCE_FILES += $(NRF5_SDK_ROOT)/components/libraries/fifo/app_fifo.c \
-                  $(NRF5_SDK_ROOT)/components/libraries/util/app_util_platform.c
-
-#assembly files common to all targets
-ASM_SOURCE_FILES  = $(NRF5_SDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf52.s
-
-#includes common to all targets
-INC_PATHS += components/drivers_nrf/gpiote
-INC_PATHS += components/drivers_nrf/hal
-INC_PATHS += components/drivers_nrf/config
-INC_PATHS += components/drivers_nrf/delay
-INC_PATHS += components/drivers_nrf/uart
-INC_PATHS += components/drivers_nrf/common
-INC_PATHS += components/drivers_nrf/rtc
-INC_PATHS += components/drivers_nrf/wdt
-INC_PATHS += components/drivers_nrf/rng
-INC_PATHS += components/drivers_nrf/clock
-INC_PATHS += components/drivers_nrf/timer
-INC_PATHS += components/libraries/util
-INC_PATHS += components/libraries/timer
-INC_PATHS += components/device
-INC_PATHS += components/toolchain/gcc
-INC_PATHS += components/toolchain
-INC_PATHS += examples/bsp
-
-INC_PATHS += components/drivers_nrf/nrf_soc_nosd
-INC_PATHS += components/libraries/fifo
-
-EXTERNALDIRS += $(addprefix $(NRF5_SDK_ROOT)/, $(INC_PATHS))
 
 CFLAGS += -DNRF52840_XXAA
 CFLAGS += -DBOARD_PCA10056
@@ -95,26 +49,54 @@ CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 LDFLAGS += -mabi=aapcs -mfloat-abi=hard -mfpu=fpv4-sp-d16
 LDFLAGS += --specs=nano.specs -lc -lnosys
 
-C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
-C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
-C_OBJECTS = $(addprefix $(OBJECTDIR)/, $(C_SOURCE_FILE_NAMES:.c=.o) )
+#nRF52 SDK sources
+NRF52_SDK_C_SRCS += components/boards/boards.c \
+  components/libraries/util/app_error.c \
+  components/libraries/util/app_error_handler_gcc.c \
+  components/libraries/util/app_error_weak.c \
+  components/libraries/util/nrf_assert.c \
+  components/libraries/queue/nrf_queue.c \
+  components/libraries/strerror/nrf_strerror.c \
+  modules/nrfx/drivers/src/nrfx_clock.c \
+  modules/nrfx/drivers/src/nrfx_rtc.c \
+  modules/nrfx/drivers/src/nrfx_gpiote.c \
+  modules/nrfx/drivers/src/nrfx_timer.c \
+  modules/nrfx/drivers/src/nrfx_wdt.c \
+  modules/nrfx/drivers/src/nrfx_uart.c \
+  modules/nrfx/drivers/src/nrfx_uarte.c \
+  modules/nrfx/drivers/src/nrfx_rng.c \
+  modules/nrfx/drivers/src/nrfx_wdt.c \
+  modules/nrfx/mdk/system_nrf52.c \
+  integration/nrfx/legacy/nrf_drv_clock.c \
+  integration/nrfx/legacy/nrf_drv_rng.c \
+  components/libraries/fifo/app_fifo.c \
+  components/libraries/util/app_util_platform.c
 
-ASM_SOURCE_FILE_NAMES = $(notdir $(ASM_SOURCE_FILES))
-ASM_PATHS = $(call remduplicates, $(dir $(ASM_SOURCE_FILES) ))
-ASM_OBJECTS = $(addprefix $(OBJECTDIR)/, $(ASM_SOURCE_FILE_NAMES:.s=.o) )
+NRF52_SDK_ASM_SRCS = modules/nrfx/mdk/gcc_startup_nrf52840.S
 
-vpath %.c $(C_PATHS)
-vpath %.s $(ASM_PATHS)
+CONTIKI_SOURCEFILES += $(notdir $(NRF52_SDK_C_SRCS))
+CONTIKI_SOURCEFILES += $(notdir $(NRF52_SDK_ASM_SRCS))
 
-OBJECTS = $(C_OBJECTS) $(ASM_OBJECTS)
+# Include folders common to all targets
+NRF52_SDK_INC_PATHS += modules/nrfx
+NRF52_SDK_INC_PATHS += modules/nrfx/mdk
+NRF52_SDK_INC_PATHS += modules/nrfx/hal
+NRF52_SDK_INC_PATHS += modules/nrfx/drivers/src
+NRF52_SDK_INC_PATHS += modules/nrfx/drivers/include
+NRF52_SDK_INC_PATHS += components/libraries/experimental_section_vars
+NRF52_SDK_INC_PATHS += components/libraries/strerror
+NRF52_SDK_INC_PATHS += components/libraries/delay
+NRF52_SDK_INC_PATHS += components/libraries/util
+NRF52_SDK_INC_PATHS += components/boards
+NRF52_SDK_INC_PATHS += integration/nrfx
+NRF52_SDK_INC_PATHS += integration/nrfx/legacy
+NRF52_SDK_INC_PATHS += components/libraries/queue
+NRF52_SDK_INC_PATHS += components/libraries/log
+NRF52_SDK_INC_PATHS += components/libraries/log/src
+NRF52_SDK_INC_PATHS += components/drivers_nrf/nrf_soc_nosd
+NRF52_SDK_INC_PATHS += components/libraries/fifo
 
-NRFLIB = $(BUILD_DIR_BOARD)/nrf52832.a
-
-TARGET_LIBS = $(NRFLIB)
-
-$(NRFLIB): $(OBJECTS)
-	$(TRACE_AR)
-	$(Q)$(AR) $(AROPTS) $@ $^
+EXTERNALDIRS += $(addprefix $(NRF5_SDK_ROOT)/, $(NRF52_SDK_INC_PATHS))
 
 include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
 
