@@ -164,16 +164,19 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_CONST_TXPOWER_MAX:
     return RADIO_RESULT_OK;
   case RADIO_CONST_PHY_OVERHEAD:
-    *value = (radio_value_t)3; /* 1 len byte, 2 bytes CRC */
+    *value = (radio_value_t)RADIO_PHY_OVERHEAD;
     return RADIO_RESULT_OK;
   case RADIO_CONST_BYTE_AIR_TIME:
-    *value = (radio_value_t)32; /* 250kbps data rate. One byte = 32us.*/
+    *value = (radio_value_t)RADIO_BYTE_AIR_TIME;
     return RADIO_RESULT_OK;
   case RADIO_CONST_DELAY_BEFORE_TX:
+    *value = (radio_value_t)RADIO_DELAY_BEFORE_TX;
     return RADIO_RESULT_OK;
   case RADIO_CONST_DELAY_BEFORE_RX:
+    *value = (radio_value_t)RADIO_DELAY_BEFORE_RX;
     return RADIO_RESULT_OK;
   case RADIO_CONST_DELAY_BEFORE_DETECT:
+    *value = (radio_value_t)RADIO_DELAY_BEFORE_DETECT;
     return RADIO_RESULT_OK;
   default:
     return RADIO_RESULT_NOT_SUPPORTED;
