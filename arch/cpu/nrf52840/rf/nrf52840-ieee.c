@@ -28,9 +28,24 @@
 #define NRF52840_COMMAND_ERR   0
 #define NRF52840_COMMAND_OK    1
 /*---------------------------------------------------------------------------*/
+#define NRF52840_CHANNEL_MIN  11
+#define NRF52840_CHANNEL_MAX  26
+/*---------------------------------------------------------------------------*/
 static uint8_t volatile poll_mode = 0;
 /*---------------------------------------------------------------------------*/
 PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
+/*---------------------------------------------------------------------------*/
+static uint8_t
+get_channel()
+{
+  return NRF_RADIO->FREQUENCY / 5 + 10;
+}
+/*---------------------------------------------------------------------------*/
+static void
+set_channel(uint8_t channel)
+{
+  NRF_RADIO->FREQUENCY = 5 * (channel - 10);
+}
 /*---------------------------------------------------------------------------*/
 /* Netstack API functions */
 /*---------------------------------------------------------------------------*/
@@ -108,6 +123,8 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_PARAM_POWER_MODE:
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CHANNEL:
+    *value = (radio_value_t)get_channel();
+    return RADIO_RESULT_OK;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_PAN_ID:
     return RADIO_RESULT_OK;
@@ -173,6 +190,11 @@ set_value(radio_param_t param, radio_value_t value)
     }
     return RADIO_RESULT_INVALID_VALUE;
   case RADIO_PARAM_CHANNEL:
+    if(value < NRF52840_CHANNEL_MIN ||
+       value > NRF52840_CHANNEL_MAX) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    set_channel(value);
     return RADIO_RESULT_OK;
   case RADIO_PARAM_PAN_ID:
     return RADIO_RESULT_OK;
