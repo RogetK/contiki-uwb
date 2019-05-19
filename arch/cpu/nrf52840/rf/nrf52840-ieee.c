@@ -195,12 +195,10 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_PARAM_CHANNEL:
     *value = (radio_value_t)get_channel();
     return RADIO_RESULT_OK;
-    return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
     if(poll_mode) {
       *value |= RADIO_RX_MODE_POLL_MODE;
     }
-    return RADIO_RESULT_OK;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
     return RADIO_RESULT_OK;
