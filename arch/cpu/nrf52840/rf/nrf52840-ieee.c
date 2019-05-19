@@ -63,6 +63,20 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define NRF52840_CCA_CORR_COUNT 0x02
 #endif
 /*---------------------------------------------------------------------------*/
+typedef struct cca_cfg_s {
+  uint8_t cca_mode;
+  uint8_t cca_corr_threshold;
+  uint8_t cca_corr_count;
+  uint8_t ed_threshold;
+} cca_cfg_t;
+
+static cca_cfg_t cca_config = {
+  .cca_mode = NRF52840_CCA_MODE,
+  .cca_corr_threshold = NRF52840_CCA_CORR_THRESHOLD,
+  .cca_corr_count = NRF52840_CCA_CORR_COUNT,
+  .ed_threshold = NRF52840_CCA_ED_THRESHOLD,
+};
+/*---------------------------------------------------------------------------*/
 static uint8_t
 get_channel()
 {
@@ -76,14 +90,14 @@ set_channel(uint8_t channel)
 }
 /*---------------------------------------------------------------------------*/
 static void
-cca_configure(void)
+cca_reconfigure()
 {
   uint32_t ccactrl;
 
-  ccactrl = NRF52840_CCA_MODE;
-  ccactrl |= NRF52840_CCA_ED_THRESHOLD << RADIO_CCACTRL_CCAEDTHRES_Pos;
-  ccactrl |= NRF52840_CCA_CORR_COUNT << RADIO_CCACTRL_CCACORRCNT_Pos;
-  ccactrl |= NRF52840_CCA_CORR_THRESHOLD << RADIO_CCACTRL_CCACORRTHRES_Pos;
+  ccactrl = cca_config.cca_mode;
+  ccactrl |= cca_config.ed_threshold << RADIO_CCACTRL_CCAEDTHRES_Pos;
+  ccactrl |= cca_config.cca_corr_count << RADIO_CCACTRL_CCACORRCNT_Pos;
+  ccactrl |= cca_config.cca_corr_threshold << RADIO_CCACTRL_CCACORRTHRES_Pos;
 
 
   NRF_RADIO->CCACTRL = ccactrl;
@@ -105,7 +119,7 @@ init(void)
 
   last_frame_timestamp = 0;
 
-  cca_configure();
+  cca_reconfigure();
 
   return RADIO_TX_OK;
 }
