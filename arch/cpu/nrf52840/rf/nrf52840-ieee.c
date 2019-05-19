@@ -148,6 +148,7 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_PARAM_CCA_THRESHOLD:
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RSSI:
+    *value = (radio_value_t)nrf_radio_rssi_sample_get();
     return RADIO_RESULT_OK;
   case RADIO_PARAM_LAST_RSSI:
     return RADIO_RESULT_OK;
