@@ -44,6 +44,9 @@ static volatile rtimer_clock_t last_frame_timestamp;
  */
 static int8_t last_rssi;
 static uint8_t last_lqi;
+
+/* Perform CCA before TX */
+static uint8_t send_on_cca = RADIO_TX_MODE_SEND_ON_CCA;
 /*---------------------------------------------------------------------------*/
 PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 /*---------------------------------------------------------------------------*/
@@ -134,6 +137,7 @@ prepare(const void *payload, unsigned short payload_len)
 static int
 transmit(unsigned short transmit_len)
 {
+  /* ToDo: Perform CCA before TX if send_on_cca */
   return RADIO_TX_OK;
 }
 /*---------------------------------------------------------------------------*/
@@ -201,6 +205,10 @@ get_value(radio_param_t param, radio_value_t *value)
     }
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
+    *value = 0;
+    if(send_on_cca) {
+      *value |= RADIO_TX_MODE_SEND_ON_CCA;
+    }
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TXPOWER:
     *value = (radio_value_t)nrf_radio_txpower_get();
@@ -284,6 +292,11 @@ set_value(radio_param_t param, radio_value_t value)
 
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
+    if(value & ~(RADIO_TX_MODE_SEND_ON_CCA)) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+
+    send_on_cca = (value & RADIO_TX_MODE_SEND_ON_CCA) != 0;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TXPOWER:
     nrf_radio_txpower_set(value);
