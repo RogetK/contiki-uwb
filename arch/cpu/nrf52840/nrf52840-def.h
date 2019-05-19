@@ -39,8 +39,6 @@
 #define ATOMIC_CONF_ARCH_HEADER_PATH         "atomic-cortex.h"
 #define MEMORY_BARRIER_CONF_ARCH_HEADER_PATH "memory-barrier-cortex.h"
 /*---------------------------------------------------------------------------*/
-#define NETSTACK_CONF_RADIO        nrf52840_ieee_driver
-/*---------------------------------------------------------------------------*/
 #if !NETSTACK_CONF_WITH_IPV6
 /* we only support IPv6 */
 #error "Only IPv6 stack is supported!"
