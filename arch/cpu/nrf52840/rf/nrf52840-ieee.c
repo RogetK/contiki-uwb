@@ -141,10 +141,6 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)get_channel();
     return RADIO_RESULT_OK;
     return RADIO_RESULT_OK;
-  case RADIO_PARAM_PAN_ID:
-    return RADIO_RESULT_OK;
-  case RADIO_PARAM_16BIT_ADDR:
-    return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
@@ -189,6 +185,9 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_CONST_DELAY_BEFORE_DETECT:
     *value = (radio_value_t)RADIO_DELAY_BEFORE_DETECT;
     return RADIO_RESULT_OK;
+
+  case RADIO_PARAM_PAN_ID:
+  case RADIO_PARAM_16BIT_ADDR:
   default:
     return RADIO_RESULT_NOT_SUPPORTED;
   }
@@ -219,10 +218,6 @@ set_value(radio_param_t param, radio_value_t value)
     }
     set_channel(value);
     return RADIO_RESULT_OK;
-  case RADIO_PARAM_PAN_ID:
-    return RADIO_RESULT_OK;
-  case RADIO_PARAM_16BIT_ADDR:
-    return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
@@ -234,6 +229,9 @@ set_value(radio_param_t param, radio_value_t value)
     return RADIO_RESULT_OK;
   case RADIO_PARAM_SHR_SEARCH:
     return RADIO_RESULT_OK;
+
+  case RADIO_PARAM_PAN_ID:
+  case RADIO_PARAM_16BIT_ADDR:
   default:
     return RADIO_RESULT_NOT_SUPPORTED;
   }
