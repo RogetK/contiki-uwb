@@ -5,6 +5,7 @@
 #include "sys/energest.h"
 #include "net/netstack.h"
 #include "net/packetbuf.h"
+#include "net/mac/tsch/tsch.h"
 #include "nrf_radio.h"
 
 #include <stdint.h>
