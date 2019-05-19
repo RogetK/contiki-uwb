@@ -227,9 +227,8 @@ set_value(radio_param_t param, radio_value_t value)
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
     return RADIO_RESULT_OK;
-  case RADIO_PARAM_SHR_SEARCH:
-    return RADIO_RESULT_OK;
 
+  case RADIO_PARAM_SHR_SEARCH:
   case RADIO_PARAM_PAN_ID:
   case RADIO_PARAM_16BIT_ADDR:
   default:
