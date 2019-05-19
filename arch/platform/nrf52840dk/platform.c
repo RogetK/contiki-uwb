@@ -37,6 +37,7 @@
 
 #include "sdk_config.h"
 #include "nrfx_gpiote.h"
+#include "nrf.h"
 
 #include "contiki-net.h"
 #include "leds.h"
@@ -49,11 +50,38 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 /*---------------------------------------------------------------------------*/
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "NRF52DK"
 #define LOG_LEVEL LOG_LEVEL_MAIN
+/*---------------------------------------------------------------------------*/
+/* Nordic semi OUI */
+#define NORDIC_SEMI_VENDOR_OUI 0xF4CE36
+/*---------------------------------------------------------------------------*/
+static void
+populate_link_address(void)
+{
+  uint8_t device_address[8];
+  uint32_t device_address_low;
+
+  /*
+   * Populate the link address' 3 MSBs using Nordic's OUI.
+   * For the remaining 5 bytes just use any 40 of the 48 FICR->DEVICEADDR
+   * Those are random, so endianness is irrelevant.
+   */
+  device_address[0] = (NORDIC_SEMI_VENDOR_OUI) >> 16 & 0xFF;
+  device_address[1] = (NORDIC_SEMI_VENDOR_OUI) >> 8 & 0xFF;
+  device_address[2] = NORDIC_SEMI_VENDOR_OUI & 0xFF;
+  device_address[3] = NRF_FICR->DEVICEADDR[1] & 0xFF;
+
+  device_address_low = NRF_FICR->DEVICEADDR[0];
+  memcpy(&device_address[4], &device_address_low, 4);
+
+  memcpy(&linkaddr_node_addr, &device_address[8 - LINKADDR_SIZE],
+         LINKADDR_SIZE);
+}
 /*---------------------------------------------------------------------------*/
 static void
 board_init(void)
@@ -85,6 +113,8 @@ platform_init_stage_two(void)
   uart0_set_input(serial_line_input_byte);
 #endif
 #endif
+
+  populate_link_address();
 }
 /*---------------------------------------------------------------------------*/
 void
