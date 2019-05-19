@@ -271,6 +271,8 @@ set_value(radio_param_t param, radio_value_t value)
     nrf_radio_txpower_set(value);
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
+    cca_config.cca_corr_threshold = value;
+    cca_reconfigure();
     return RADIO_RESULT_OK;
 
   case RADIO_PARAM_SHR_SEARCH:
