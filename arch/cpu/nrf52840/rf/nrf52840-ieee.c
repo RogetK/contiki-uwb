@@ -137,6 +137,7 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_PARAM_TX_MODE:
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TXPOWER:
+    *value = (radio_value_t)nrf_radio_txpower_get();
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
     return RADIO_RESULT_OK;
@@ -207,6 +208,7 @@ set_value(radio_param_t param, radio_value_t value)
   case RADIO_PARAM_TX_MODE:
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TXPOWER:
+    nrf_radio_txpower_set(value);
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
     return RADIO_RESULT_OK;
