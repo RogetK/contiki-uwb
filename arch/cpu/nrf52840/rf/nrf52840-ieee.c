@@ -160,8 +160,10 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = 26;
     return RADIO_RESULT_OK;
   case RADIO_CONST_TXPOWER_MIN:
+    *value = (radio_value_t)RADIO_TXPOWER_TXPOWER_Neg40dBm;
     return RADIO_RESULT_OK;
   case RADIO_CONST_TXPOWER_MAX:
+    *value = (radio_value_t)RADIO_TXPOWER_TXPOWER_Pos8dBm;
     return RADIO_RESULT_OK;
   case RADIO_CONST_PHY_OVERHEAD:
     *value = (radio_value_t)RADIO_PHY_OVERHEAD;
