@@ -32,6 +32,9 @@
 #define NRF52840_CHANNEL_MAX  26
 /*---------------------------------------------------------------------------*/
 static uint8_t volatile poll_mode = 0;
+
+/* Store the timestamp of the most recently received packet in rtimer ticks */
+static volatile rtimer_clock_t last_frame_timestamp;
 /*---------------------------------------------------------------------------*/
 PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 /*---------------------------------------------------------------------------*/
@@ -53,6 +56,8 @@ static int
 init(void)
 {
   set_channel(IEEE802154_DEFAULT_CHANNEL);
+
+  last_frame_timestamp = 0;
 
   return RADIO_TX_OK;
 }
@@ -222,6 +227,25 @@ set_value(radio_param_t param, radio_value_t value)
 static radio_result_t
 get_object(radio_param_t param, void *dest, size_t size)
 {
+  if(param == RADIO_PARAM_LAST_PACKET_TIMESTAMP) {
+    if(size != sizeof(rtimer_clock_t) || !dest) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    *(rtimer_clock_t *)dest = last_frame_timestamp;
+    return RADIO_RESULT_OK;
+  }
+
+#if MAC_CONF_WITH_TSCH
+  if(param == RADIO_CONST_TSCH_TIMING) {
+    if(size != sizeof(uint16_t *) || !dest) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+    /* Assigned value: a pointer to the TSCH timing in usec */
+    *(const uint16_t **)dest = tsch_timeslot_timing_us_10000;
+    return RADIO_RESULT_OK;
+  }
+#endif /* MAC_CONF_WITH_TSCH */
+
   /* The radio does not support h/w frame filtering based on addresses */
   return RADIO_RESULT_NOT_SUPPORTED;
 }
@@ -276,6 +300,12 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 void
 interrupt_handler(void)
 {
+  /*
+   * ToDo: Needs to store the SFD reception timestamp, but only after a frame
+   * has been received fully.
+   */
+  last_frame_timestamp = RTIMER_NOW();
+
   if(!poll_mode) {
     process_poll(&nrf52840_ieee_rf_process);
   }
