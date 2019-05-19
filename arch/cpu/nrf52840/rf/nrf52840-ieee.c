@@ -103,13 +103,6 @@ cca_reconfigure()
   NRF_RADIO->CCACTRL = ccactrl;
 }
 /*---------------------------------------------------------------------------*/
-static radio_value_t
-cca_threshold_get(void)
-{
-  return (NRF_RADIO->CCACTRL = RADIO_CCACTRL_CCACORRTHRES_Msk)
-      >> RADIO_CCACTRL_CCACORRTHRES_Pos;
-}
-/*---------------------------------------------------------------------------*/
 /* Netstack API functions */
 /*---------------------------------------------------------------------------*/
 static int
@@ -203,7 +196,7 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)nrf_radio_txpower_get();
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
-    *value = cca_threshold_get();
+    *value = (radio_value_t)cca_config.cca_corr_threshold;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RSSI:
     *value = (radio_value_t)nrf_radio_rssi_sample_get();
