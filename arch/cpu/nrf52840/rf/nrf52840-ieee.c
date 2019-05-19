@@ -52,6 +52,8 @@ set_channel(uint8_t channel)
 static int
 init(void)
 {
+  set_channel(IEEE802154_DEFAULT_CHANNEL);
+
   return RADIO_TX_OK;
 }
 /*---------------------------------------------------------------------------*/
