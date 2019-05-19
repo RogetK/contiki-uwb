@@ -222,23 +222,14 @@ set_value(radio_param_t param, radio_value_t value)
 static radio_result_t
 get_object(radio_param_t param, void *dest, size_t size)
 {
-  if(param == RADIO_PARAM_64BIT_ADDR) {
-    return RADIO_RESULT_OK;
-  }
-
-  if(param == RADIO_PARAM_LAST_PACKET_TIMESTAMP) {
-    return RADIO_RESULT_OK;
-  }
-
+  /* The radio does not support h/w frame filtering based on addresses */
   return RADIO_RESULT_NOT_SUPPORTED;
 }
 /*---------------------------------------------------------------------------*/
 static radio_result_t
 set_object(radio_param_t param, const void *src, size_t size)
 {
-  if(param == RADIO_PARAM_64BIT_ADDR) {
-    return RADIO_RESULT_OK;
-  }
+  /* The radio does not support h/w frame filtering based on addresses */
   return RADIO_RESULT_NOT_SUPPORTED;
 }
 /*---------------------------------------------------------------------------*/
