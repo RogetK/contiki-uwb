@@ -36,6 +36,14 @@ static uint8_t volatile poll_mode = 0;
 
 /* Store the timestamp of the most recently received packet in rtimer ticks */
 static volatile rtimer_clock_t last_frame_timestamp;
+
+/*
+ * The last frame's RSSI and LQI
+ * ToDO: nrf52840 won't write this in the FCS like other radios will. Need to
+ * figure out a way to find and store it
+ */
+static int8_t last_rssi;
+static uint8_t last_lqi;
 /*---------------------------------------------------------------------------*/
 PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 /*---------------------------------------------------------------------------*/
@@ -187,8 +195,10 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)nrf_radio_rssi_sample_get();
     return RADIO_RESULT_OK;
   case RADIO_PARAM_LAST_RSSI:
+    *value = (radio_value_t)last_rssi;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_LAST_LINK_QUALITY:
+    *value = (radio_value_t)last_lqi;
     return RADIO_RESULT_OK;
   case RADIO_CONST_CHANNEL_MIN:
     *value = 11;
