@@ -39,6 +39,22 @@ static volatile rtimer_clock_t last_frame_timestamp;
 /*---------------------------------------------------------------------------*/
 PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 /*---------------------------------------------------------------------------*/
+#ifndef NRF52840_CCA_MODE
+#define NRF52840_CCA_MODE RADIO_CCACTRL_CCAMODE_CarrierOrEdMode
+#endif
+
+#ifndef NRF52840_CCA_ED_THRESHOLD
+#define NRF52840_CCA_ED_THRESHOLD 0x14
+#endif
+
+#ifndef NRF52840_CCA_CORR_THRESHOLD
+#define NRF52840_CCA_CORR_THRESHOLD 0x14
+#endif
+
+#ifndef NRF52840_CCA_CORR_COUNT
+#define NRF52840_CCA_CORR_COUNT 0x02
+#endif
+/*---------------------------------------------------------------------------*/
 static uint8_t
 get_channel()
 {
@@ -49,6 +65,20 @@ static void
 set_channel(uint8_t channel)
 {
   NRF_RADIO->FREQUENCY = 5 * (channel - 10);
+}
+/*---------------------------------------------------------------------------*/
+static void
+cca_configure(void)
+{
+  uint32_t ccactrl;
+
+  ccactrl = NRF52840_CCA_MODE;
+  ccactrl |= NRF52840_CCA_ED_THRESHOLD << RADIO_CCACTRL_CCAEDTHRES_Pos;
+  ccactrl |= NRF52840_CCA_CORR_COUNT << RADIO_CCACTRL_CCACORRCNT_Pos;
+  ccactrl |= NRF52840_CCA_CORR_THRESHOLD << RADIO_CCACTRL_CCACORRTHRES_Pos;
+
+
+  NRF_RADIO->CCACTRL = ccactrl;
 }
 /*---------------------------------------------------------------------------*/
 static radio_value_t
@@ -66,6 +96,8 @@ init(void)
   set_channel(IEEE802154_DEFAULT_CHANNEL);
 
   last_frame_timestamp = 0;
+
+  cca_configure();
 
   return RADIO_TX_OK;
 }
