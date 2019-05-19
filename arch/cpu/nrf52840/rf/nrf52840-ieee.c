@@ -32,7 +32,7 @@
 #define NRF52840_CHANNEL_MIN  11
 #define NRF52840_CHANNEL_MAX  26
 /*---------------------------------------------------------------------------*/
-static uint8_t volatile poll_mode = 0;
+static volatile bool poll_mode = false;
 
 /* Store the timestamp of the most recently received packet in rtimer ticks */
 static volatile rtimer_clock_t last_frame_timestamp;
@@ -101,6 +101,14 @@ cca_reconfigure()
 
 
   NRF_RADIO->CCACTRL = ccactrl;
+}
+/*---------------------------------------------------------------------------*/
+static void
+set_poll_mode(bool enable)
+{
+  poll_mode = enable;
+
+  /* ToDo: Configure interrupts */
 }
 /*---------------------------------------------------------------------------*/
 /* Netstack API functions */
@@ -189,6 +197,10 @@ get_value(radio_param_t param, radio_value_t *value)
     return RADIO_RESULT_OK;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
+    if(poll_mode) {
+      *value |= RADIO_RX_MODE_POLL_MODE;
+    }
+    return RADIO_RESULT_OK;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
     return RADIO_RESULT_OK;
@@ -264,6 +276,14 @@ set_value(radio_param_t param, radio_value_t value)
     set_channel(value);
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
+    if(value & ~(RADIO_RX_MODE_ADDRESS_FILTER |
+                 RADIO_RX_MODE_AUTOACK |
+                 RADIO_RX_MODE_POLL_MODE)) {
+      return RADIO_RESULT_INVALID_VALUE;
+    }
+
+    set_poll_mode((value & RADIO_RX_MODE_POLL_MODE) != 0);
+
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
     return RADIO_RESULT_OK;
