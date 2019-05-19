@@ -34,6 +34,11 @@
 /*---------------------------------------------------------------------------*/
 #include "cm4/cm4-def.h"
 /*---------------------------------------------------------------------------*/
+/* Path to headers with implementation of mutexes, atomic and memory barriers */
+#define MUTEX_CONF_ARCH_HEADER_PATH          "mutex-cortex.h"
+#define ATOMIC_CONF_ARCH_HEADER_PATH         "atomic-cortex.h"
+#define MEMORY_BARRIER_CONF_ARCH_HEADER_PATH "memory-barrier-cortex.h"
+/*---------------------------------------------------------------------------*/
 #if !NETSTACK_CONF_WITH_IPV6
 /* we only support IPv6 */
 #error "Only IPv6 stack is supported!"
