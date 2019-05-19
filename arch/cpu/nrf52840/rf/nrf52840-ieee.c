@@ -238,10 +238,6 @@ set_value(radio_param_t param, radio_value_t value)
       off();
       return RADIO_RESULT_OK;
     }
-    if(value == RADIO_POWER_MODE_CARRIER_ON ||
-       value == RADIO_POWER_MODE_CARRIER_OFF) {
-      return RADIO_RESULT_OK;
-    }
     return RADIO_RESULT_INVALID_VALUE;
   case RADIO_PARAM_CHANNEL:
     if(value < NRF52840_CHANNEL_MIN ||
