@@ -53,6 +53,29 @@
    Intended only for positive values of T. */
 #define RTIMERTICKS_TO_US_64(T)  ((uint32_t)(((uint64_t)(T) * 1000000 + ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND)))
 /*---------------------------------------------------------------------------*/
+#define RADIO_PHY_OVERHEAD            3
+#define RADIO_BYTE_AIR_TIME          32
+#define RADIO_SHR_LEN                 5 /* Synch word + SFD */
+#define RADIO_DELAY_BEFORE_TX         \
+  ((unsigned)US_TO_RTIMERTICKS(RADIO_SHR_LEN * RADIO_BYTE_AIR_TIME))
+/* Very conservative value moved over from CC2538 */
+#define RADIO_DELAY_BEFORE_RX         ((unsigned)US_TO_RTIMERTICKS(250))
+#define RADIO_DELAY_BEFORE_DETECT     0
+
+#define TSCH_CONF_HW_FRAME_FILTERING  0
+
+#ifndef TSCH_CONF_BASE_DRIFT_PPM
+/*
+ * The drift compared to "true" 10ms slots.
+ * Enable adaptive sync to enable compensation for this.
+ * Slot length 10000 usec
+ * 1000000 / 62500 = 16 usec / rtimer tick
+ * 10 ms is 625 ticks, exactly
+ * Real slot duration 10000 usec
+ */
+#define TSCH_CONF_BASE_DRIFT_PPM 0
+#endif
+/*---------------------------------------------------------------------------*/
 #if !NETSTACK_CONF_WITH_IPV6
 /* we only support IPv6 */
 #error "Only IPv6 stack is supported!"
