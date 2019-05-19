@@ -75,7 +75,7 @@ platform_init_stage_one(void)
 void
 platform_init_stage_two(void)
 {
-  // Seed value is ignored since hardware RNG is used.
+  /* Seed value is ignored since hardware RNG is used. */
   random_init(0);
 
 #if UART0_ENABLED
