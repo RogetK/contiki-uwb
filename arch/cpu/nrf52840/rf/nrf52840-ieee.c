@@ -109,6 +109,12 @@ static cca_cfg_t cca_config = {
   .ed_threshold = NRF52840_CCA_ED_THRESHOLD,
 };
 /*---------------------------------------------------------------------------*/
+static bool
+radio_is_powered(void)
+{
+  return NRF_RADIO->POWER == 0 ? false : true;
+}
+/*---------------------------------------------------------------------------*/
 static uint8_t
 get_channel(void)
 {
