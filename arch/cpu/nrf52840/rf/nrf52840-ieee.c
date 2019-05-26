@@ -7,6 +7,8 @@
 #include "net/packetbuf.h"
 #include "net/mac/tsch/tsch.h"
 #include "nrf_radio.h"
+#include "nrf_ppi.h"
+#include "nrf_timer.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -48,9 +50,6 @@
 #define ACK_PAYLOAD_MIN_LEN  (ACK_MPDU_MIN_LEN - FCS_LEN)
 /*---------------------------------------------------------------------------*/
 static volatile bool poll_mode = false;
-
-/* Store the timestamp of the most recently received packet in rtimer ticks */
-static volatile rtimer_clock_t last_frame_timestamp;
 
 /*
  * The last frame's RSSI and LQI
@@ -275,6 +274,24 @@ rssi_read(void)
   return -((int8_t)rssi_sample);
 }
 /*---------------------------------------------------------------------------*/
+/* ToDo:
+ * - Deal with the conversion between CC and rtimer ticks
+ * - Deal with the time delta between SFD reception and EVENTS_END
+ */
+#define CONVERT(z) (z)
+
+static rtimer_clock_t
+last_timestamp_read(void)
+{
+  rtimer_clock_t timestamp;
+  uint32_t timestamp_cc;
+
+  timestamp_cc = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL2);
+  timestamp = CONVERT(timestamp_cc);
+
+  return timestamp;
+}
+/*---------------------------------------------------------------------------*/
 /*
  * Convert the hardware-reported LQI to 802.15.4 range using an 8-bit
  * saturating multiplication by 4, as per the Product Spec.
@@ -297,7 +314,6 @@ on(void)
 static int
 init(void)
 {
-  last_frame_timestamp = 0;
   last_rssi = 0;
   last_lqi = 0;
 
@@ -553,7 +569,7 @@ get_object(radio_param_t param, void *dest, size_t size)
     if(size != sizeof(rtimer_clock_t) || !dest) {
       return RADIO_RESULT_INVALID_VALUE;
     }
-    *(rtimer_clock_t *)dest = last_frame_timestamp;
+    *(rtimer_clock_t *)dest = last_timestamp_read();
     return RADIO_RESULT_OK;
   }
 
@@ -622,12 +638,6 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 void
 interrupt_handler(void)
 {
-  /*
-   * ToDo: Needs to store the SFD reception timestamp, but only after a frame
-   * has been received fully.
-   */
-  last_frame_timestamp = RTIMER_NOW();
-
   if(!poll_mode) {
     process_poll(&nrf52840_ieee_rf_process);
   }
