@@ -131,7 +131,6 @@ cca_reconfigure(void)
   ccactrl |= cca_config.cca_corr_count << RADIO_CCACTRL_CCACORRCNT_Pos;
   ccactrl |= cca_config.cca_corr_threshold << RADIO_CCACTRL_CCACORRTHRES_Pos;
 
-
   NRF_RADIO->CCACTRL = ccactrl;
 }
 /*---------------------------------------------------------------------------*/
