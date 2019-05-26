@@ -606,7 +606,7 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
     do {
       watchdog_periodic();
       packetbuf_clear();
-      len = NETSTACK_RADIO.read(packetbuf_dataptr(), PACKETBUF_SIZE);
+      len = read_frame(packetbuf_dataptr(), PACKETBUF_SIZE);
 
       if(len > 0) {
         packetbuf_set_datalen(len);
