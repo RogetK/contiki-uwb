@@ -272,6 +272,8 @@ static int
 init(void)
 {
   last_frame_timestamp = 0;
+  last_rssi = 0;
+  last_lqi = 0;
 
   /* Start the RF driver process */
   process_start(&nrf52840_ieee_rf_process, NULL);
