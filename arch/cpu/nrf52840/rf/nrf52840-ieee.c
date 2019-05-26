@@ -171,16 +171,17 @@ set_poll_mode(bool enable)
   /* ToDo: Configure interrupts */
 }
 /*---------------------------------------------------------------------------*/
-/* Netstack API functions */
-/*---------------------------------------------------------------------------*/
-static int
-init(void)
+/*
+ * Powering off the peripheral will reset all registers to default values
+ * This function here must be called at every power on to set the radio in a
+ * known state
+ */
+static void
+configure(void)
 {
   nrf_radio_mode_set(NRF_RADIO_MODE_IEEE802154_250KBIT);
 
   set_channel(IEEE802154_DEFAULT_CHANNEL);
-
-  last_frame_timestamp = 0;
 
   cca_reconfigure();
 
@@ -195,9 +196,27 @@ init(void)
    * The Nordic driver is using DTX=0, but this is against the PS (v1.1 p351)
    */
   nrf_radio_modecnf0_set(true, RADIO_MODECNF0_DTX_Center);
+}
+/*---------------------------------------------------------------------------*/
+static void
+power_on_and_configure(void)
+{
+  nrf_radio_power_set(true);
+  configure();
+}
+/*---------------------------------------------------------------------------*/
+/* Netstack API functions */
+/*---------------------------------------------------------------------------*/
+static int
+init(void)
+{
+  last_frame_timestamp = 0;
 
   /* Start the RF driver process */
   process_start(&nrf52840_ieee_rf_process, NULL);
+
+  /* Power on the radio */
+  power_on_and_configure();
 
   return RADIO_TX_OK;
 }
