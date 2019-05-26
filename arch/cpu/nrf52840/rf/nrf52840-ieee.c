@@ -275,7 +275,10 @@ on(void)
 static int
 off(void)
 {
+  nrf_radio_power_set(false);
+
   ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
+
   return NRF52840_COMMAND_OK;
 }
 /*---------------------------------------------------------------------------*/
