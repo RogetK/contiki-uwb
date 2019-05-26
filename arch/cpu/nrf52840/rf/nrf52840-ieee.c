@@ -102,7 +102,7 @@ static cca_cfg_t cca_config = {
 };
 /*---------------------------------------------------------------------------*/
 static uint8_t
-get_channel()
+get_channel(void)
 {
   return NRF_RADIO->FREQUENCY / 5 + 10;
 }
