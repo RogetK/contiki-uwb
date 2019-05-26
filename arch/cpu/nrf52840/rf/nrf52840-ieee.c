@@ -330,7 +330,18 @@ channel_clear(void)
 static int
 receiving_packet(void)
 {
-  return NRF52840_RECEIVING_YES;
+  LOG_DBG("Receiving\n");
+
+  /*
+   * Start of reception generates the FRAMESTART event. End of reception
+   * generates the END event. If FRAMESTART is generated and END is not then
+   * we are in the process of receiving.
+   */
+  if((nrf_radio_event_check(NRF_RADIO_EVENT_FRAMESTART) == true) &&
+     (nrf_radio_event_check(NRF_RADIO_EVENT_END) == false)) {
+    return NRF52840_RECEIVING_YES;
+  }
+  return NRF52840_RECEIVING_NO;
 }
 /*---------------------------------------------------------------------------*/
 static int
