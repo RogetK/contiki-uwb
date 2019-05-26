@@ -638,9 +638,10 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 }
 /*---------------------------------------------------------------------------*/
 void
-interrupt_handler(void)
+RADIO_IRQHandler(void)
 {
   if(!poll_mode) {
+    nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
     process_poll(&nrf52840_ieee_rf_process);
   }
 }
