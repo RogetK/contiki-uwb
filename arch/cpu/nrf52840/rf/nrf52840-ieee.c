@@ -184,6 +184,12 @@ set_poll_mode(bool enable)
   /* ToDo: Configure interrupts */
 }
 /*---------------------------------------------------------------------------*/
+static void
+rx_buf_clear(void)
+{
+  memset(&rx_buf, 0, sizeof(rx_buf));
+}
+/*---------------------------------------------------------------------------*/
 /*
  * Powering off the peripheral will reset all registers to default values
  * This function here must be called at every power on to set the radio in a
