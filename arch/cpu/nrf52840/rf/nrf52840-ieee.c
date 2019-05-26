@@ -312,6 +312,12 @@ on(void)
 }
 /*---------------------------------------------------------------------------*/
 static int
+channel_clear(void)
+{
+  return NRF52840_CCA_CLEAR;
+}
+/*---------------------------------------------------------------------------*/
+static int
 init(void)
 {
   last_rssi = 0;
@@ -384,12 +390,6 @@ read_frame(void *buf, unsigned short bufsize)
   rx_buf_clear();
 
   return payload_len;
-}
-/*---------------------------------------------------------------------------*/
-static int
-channel_clear(void)
-{
-  return NRF52840_CCA_CLEAR;
 }
 /*---------------------------------------------------------------------------*/
 static int
