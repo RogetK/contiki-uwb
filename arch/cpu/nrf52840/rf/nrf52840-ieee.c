@@ -95,6 +95,13 @@ typedef struct tx_buf_s {
 
 static tx_buf_t tx_buf;
 /*---------------------------------------------------------------------------*/
+typedef struct rx_buf_s {
+  uint8_t phr;
+  uint8_t mpdu[MPDU_LEN];
+} rx_buf_t;
+
+static rx_buf_t rx_buf;
+/*---------------------------------------------------------------------------*/
 typedef struct cca_cfg_s {
   uint8_t cca_mode;
   uint8_t cca_corr_threshold;
