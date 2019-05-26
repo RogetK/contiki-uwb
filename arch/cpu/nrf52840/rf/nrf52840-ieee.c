@@ -32,6 +32,15 @@
 #define NRF52840_CHANNEL_MIN  11
 #define NRF52840_CHANNEL_MAX  26
 /*---------------------------------------------------------------------------*/
+#define FCS_LEN                2
+#define MPDU_LEN             127
+/*
+ * The maximum number of bytes this driver can accept from the MAC layer for
+ * transmission or will deliver to the MAC layer after reception. Includes
+ * the MAC header and payload, but not the FCS.
+ */
+#define MAX_PAYLOAD_LEN      (MPDU_LEN - FCS_LEN)
+/*---------------------------------------------------------------------------*/
 static volatile bool poll_mode = false;
 
 /* Store the timestamp of the most recently received packet in rtimer ticks */
