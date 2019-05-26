@@ -263,6 +263,24 @@ power_on_and_configure(void)
   configure();
 }
 /*---------------------------------------------------------------------------*/
+/* The caller must first make sure the radio is powered and configured */
+static void
+enter_rx(void)
+{
+  /* Prepare the RX buffer */
+  memset(&rx_buf, 0, sizeof(rx_buf));
+  nrf_radio_packetptr_set(&rx_buf);
+
+  /*
+   * Enable the RXREADY->START shortcut. Immediate transition to the RX state
+   * after RXRU has completed
+   */
+  nrf_radio_shorts_enable(NRF_RADIO_SHORT_RXREADY_START_MASK);
+
+  /* Trigger RXRU */
+  nrf_radio_task_trigger(NRF_RADIO_TASK_RXEN);
+}
+/*---------------------------------------------------------------------------*/
 /* Retrieve an RSSI sample. The radio must be in RX mode */
 static int8_t
 rssi_read(void)
