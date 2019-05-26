@@ -330,6 +330,17 @@ lqi_convert_to_802154_scale(uint8_t lqi_hw)
 static int
 on(void)
 {
+  if(radio_is_powered() == false) {
+    power_on_and_configure();
+  }
+
+  nrf_timer_mode_set(NRF_TIMER0, NRF_TIMER_MODE_COUNTER);
+  nrf_timer_task_trigger(NRF_TIMER0, NRF_TIMER_TASK_START);
+
+  nrf_ppi_channel_enable(NRF_PPI_CHANNEL20);
+
+  enter_rx();
+
   ENERGEST_ON(ENERGEST_TYPE_LISTEN);
   return NRF52840_COMMAND_OK;
 }
