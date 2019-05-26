@@ -288,6 +288,13 @@ lqi_convert_to_802154_scale(uint8_t lqi_hw)
 /* Netstack API functions */
 /*---------------------------------------------------------------------------*/
 static int
+on(void)
+{
+  ENERGEST_ON(ENERGEST_TYPE_LISTEN);
+  return NRF52840_COMMAND_OK;
+}
+/*---------------------------------------------------------------------------*/
+static int
 init(void)
 {
   last_frame_timestamp = 0;
@@ -399,13 +406,6 @@ pending_packet(void)
   }
 
   return NRF52840_PENDING_NO;
-}
-/*---------------------------------------------------------------------------*/
-static int
-on(void)
-{
-  ENERGEST_ON(ENERGEST_TYPE_LISTEN);
-  return NRF52840_COMMAND_OK;
 }
 /*---------------------------------------------------------------------------*/
 static int
