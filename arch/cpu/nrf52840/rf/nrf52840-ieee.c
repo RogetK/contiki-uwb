@@ -197,6 +197,15 @@ rx_buf_clear(void)
   memset(&rx_buf, 0, sizeof(rx_buf));
 }
 /*---------------------------------------------------------------------------*/
+static void
+rx_events_clear()
+{
+  nrf_radio_event_clear(NRF_RADIO_EVENT_FRAMESTART);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_END);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_CRCERROR);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
+}
+/*---------------------------------------------------------------------------*/
 /*
  * Powering off the peripheral will reset all registers to default values
  * This function here must be called at every power on to set the radio in a
