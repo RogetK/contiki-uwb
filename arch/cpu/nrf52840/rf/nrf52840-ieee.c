@@ -188,11 +188,27 @@ packet_init(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
+setup_interrupts(void)
+{
+  nrf_radio_int_mask_t interrupts = 0;
+
+  if(!poll_mode) {
+    nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
+    interrupts |= NRF_RADIO_INT_CRCOK_MASK;
+  }
+
+  if(interrupts) {
+    nrf_radio_int_enable(interrupts);
+    NVIC_ClearPendingIRQ(RADIO_IRQn);
+    NVIC_EnableIRQ(RADIO_IRQn);
+  }
+}
+/*---------------------------------------------------------------------------*/
+static void
 set_poll_mode(bool enable)
 {
   poll_mode = enable;
-
-  /* ToDo: Configure interrupts */
+  setup_interrupts();
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -208,20 +224,6 @@ rx_events_clear()
   nrf_radio_event_clear(NRF_RADIO_EVENT_END);
   nrf_radio_event_clear(NRF_RADIO_EVENT_CRCERROR);
   nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
-}
-/*---------------------------------------------------------------------------*/
-static void
-setup_interrupts(void)
-{
-  nrf_radio_int_mask_t interrupts = NRF_RADIO_INT_CRCERROR_MASK;
-
-  if(!poll_mode) {
-    interrupts |= NRF_RADIO_INT_CRCOK_MASK;
-  }
-
-  nrf_radio_int_enable(interrupts);
-  NVIC_ClearPendingIRQ(RADIO_IRQn);
-  NVIC_EnableIRQ(RADIO_IRQn);
 }
 /*---------------------------------------------------------------------------*/
 /*
@@ -249,6 +251,9 @@ configure(void)
    * The Nordic driver is using DTX=0, but this is against the PS (v1.1 p351)
    */
   nrf_radio_modecnf0_set(true, RADIO_MODECNF0_DTX_Center);
+
+  /* Enabled interrupts, if applicable */
+  setup_interrupts();
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -328,6 +333,9 @@ init(void)
 
   /* Power on the radio */
   power_on_and_configure();
+
+  /* Set up initial state of poll mode. This will configure interrupts. */
+  set_poll_mode(poll_mode);
 
   return RADIO_TX_OK;
 }
