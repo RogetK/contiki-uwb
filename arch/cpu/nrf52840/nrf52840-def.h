@@ -76,6 +76,8 @@
 #define TSCH_CONF_BASE_DRIFT_PPM 0
 #endif
 /*---------------------------------------------------------------------------*/
+#define nrf52840_ieee_driver_max_payload_len        125
+/*---------------------------------------------------------------------------*/
 #if !NETSTACK_CONF_WITH_IPV6
 /* we only support IPv6 */
 #error "Only IPv6 stack is supported!"
