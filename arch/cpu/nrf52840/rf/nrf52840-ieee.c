@@ -213,6 +213,22 @@ power_on_and_configure(void)
   configure();
 }
 /*---------------------------------------------------------------------------*/
+/* Retrieve an RSSI sample. The radio must be in RX mode */
+static int8_t
+rssi_read(void)
+{
+  uint8_t rssi_sample;
+
+  nrf_radio_task_trigger(NRF_RADIO_TASK_RSSISTART);
+
+  while(nrf_radio_event_check(NRF_RADIO_EVENT_RSSIEND) == false);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_RSSIEND);
+
+  rssi_sample = nrf_radio_rssi_sample_get();
+
+  return -((int8_t)rssi_sample);
+}
+/*---------------------------------------------------------------------------*/
 /* Netstack API functions */
 /*---------------------------------------------------------------------------*/
 static int
@@ -334,7 +350,7 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)cca_config.cca_corr_threshold;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RSSI:
-    *value = (radio_value_t)nrf_radio_rssi_sample_get();
+    *value = (radio_value_t)rssi_read();
     return RADIO_RESULT_OK;
   case RADIO_PARAM_LAST_RSSI:
     *value = (radio_value_t)last_rssi;
