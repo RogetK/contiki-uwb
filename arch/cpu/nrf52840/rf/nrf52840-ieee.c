@@ -75,6 +75,18 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define NRF52840_CCA_CORR_COUNT 0x02
 #endif
 /*---------------------------------------------------------------------------*/
+/*
+ * .15.4-compliant CRC:
+ *
+ * Lenght 2, Initial value 0.
+ *
+ * Polynomial x^16 + x^12 + x^5 + 1
+ * CRCPOLY: 1 00010000 00100001
+ */
+#define CRC_IEEE802154_LEN             2
+#define CRC_IEEE802154_POLY      0x11021
+#define CRC_IEEE802154_INIT            0
+/*---------------------------------------------------------------------------*/
 typedef struct cca_cfg_s {
   uint8_t cca_mode;
   uint8_t cca_corr_threshold;
@@ -116,6 +128,21 @@ cca_reconfigure(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
+crc_init(void)
+{
+  /*
+   * Initialise the CRC engine in .15.4 mode:
+   * - Length: 2 bytes
+   * - Polynomial:
+   * - Initial value: 0
+   */
+  nrf_radio_crc_configure(CRC_IEEE802154_LEN, NRF_RADIO_CRC_ADDR_IEEE802154,
+                          CRC_IEEE802154_POLY);
+
+  nrf_radio_crcinit_set(CRC_IEEE802154_INIT);
+}
+/*---------------------------------------------------------------------------*/
+static void
 set_poll_mode(bool enable)
 {
   poll_mode = enable;
@@ -135,6 +162,9 @@ init(void)
   last_frame_timestamp = 0;
 
   cca_reconfigure();
+
+  /* Initialise the CRC engine in .15.4 mode */
+  crc_init();
 
   return RADIO_TX_OK;
 }
