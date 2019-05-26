@@ -43,6 +43,9 @@
  * the MAC header and payload, but not the FCS.
  */
 #define MAX_PAYLOAD_LEN      (MPDU_LEN - FCS_LEN)
+
+#define ACK_MPDU_MIN_LEN      5
+#define ACK_PAYLOAD_MIN_LEN  (ACK_MPDU_MIN_LEN - FCS_LEN)
 /*---------------------------------------------------------------------------*/
 static volatile bool poll_mode = false;
 
@@ -336,7 +339,28 @@ send(const void *payload, unsigned short payload_len)
 static int
 read_frame(void *buf, unsigned short bufsize)
 {
-  return 0;
+  int payload_len;
+
+  /* Clear all events */
+  rx_events_clear();
+
+  payload_len = rx_buf.phr - FCS_LEN;
+
+  if(payload_len < ACK_PAYLOAD_MIN_LEN || payload_len > MAX_PAYLOAD_LEN) {
+    LOG_ERR("Incorrect length: %d\n", payload_len);
+    rx_buf_clear();
+    return 0;
+  }
+
+  memcpy(buf, rx_buf.mpdu, payload_len);
+  last_lqi = lqi_convert_to_802154_scale(rx_buf.mpdu[payload_len]);
+
+  packetbuf_set_attr(PACKETBUF_ATTR_RSSI, last_rssi);
+  packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, last_lqi);
+
+  rx_buf_clear();
+
+  return payload_len;
 }
 /*---------------------------------------------------------------------------*/
 static int
