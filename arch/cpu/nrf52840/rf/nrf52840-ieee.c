@@ -208,6 +208,20 @@ rx_events_clear()
   nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
 }
 /*---------------------------------------------------------------------------*/
+static void
+setup_interrupts(void)
+{
+  nrf_radio_int_mask_t interrupts = NRF_RADIO_INT_CRCERROR_MASK;
+
+  if(!poll_mode) {
+    interrupts |= NRF_RADIO_INT_CRCOK_MASK;
+  }
+
+  nrf_radio_int_enable(interrupts);
+  NVIC_ClearPendingIRQ(RADIO_IRQn);
+  NVIC_EnableIRQ(RADIO_IRQn);
+}
+/*---------------------------------------------------------------------------*/
 /*
  * Powering off the peripheral will reset all registers to default values
  * This function here must be called at every power on to set the radio in a
