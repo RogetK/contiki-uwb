@@ -190,6 +190,12 @@ init(void)
   /* Initialise the packet format */
   packet_init();
 
+  /*
+   * MODECNF: Fast ramp up, DTX=center
+   * The Nordic driver is using DTX=0, but this is against the PS (v1.1 p351)
+   */
+  nrf_radio_modecnf0_set(true, RADIO_MODECNF0_DTX_Center);
+
   return RADIO_TX_OK;
 }
 /*---------------------------------------------------------------------------*/
