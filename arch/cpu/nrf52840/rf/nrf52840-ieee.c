@@ -256,6 +256,16 @@ rssi_read(void)
   return -((int8_t)rssi_sample);
 }
 /*---------------------------------------------------------------------------*/
+/*
+ * Convert the hardware-reported LQI to 802.15.4 range using an 8-bit
+ * saturating multiplication by 4, as per the Product Spec.
+ */
+static uint8_t
+lqi_convert_to_802154_scale(uint8_t lqi_hw)
+{
+  return (uint8_t)lqi_hw > 63 ? 255 : lqi_hw * ED_RSSISCALE;
+}
+/*---------------------------------------------------------------------------*/
 /* Netstack API functions */
 /*---------------------------------------------------------------------------*/
 static int
