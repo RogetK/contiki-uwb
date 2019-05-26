@@ -143,6 +143,27 @@ crc_init(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
+packet_init(void)
+{
+  /* Configure packet format for .15.4 */
+  nrf_radio_packet_conf_t conf;
+
+  memset(&conf, 0, sizeof(conf));
+
+  conf.lflen = 8; /* Length field, in bits */
+  conf.s1incl = false;
+  conf.plen = NRF_RADIO_PREAMBLE_LENGTH_32BIT_ZERO;
+
+  /* The Nordic driver uses true for crcinc, but this does not make sense */
+  conf.crcinc = false;
+  conf.big_endian = false;
+  conf.whiteen = false;
+  conf.maxlen = MPDU_LEN;
+
+  nrf_radio_packet_configure(&conf);
+}
+/*---------------------------------------------------------------------------*/
+static void
 set_poll_mode(bool enable)
 {
   poll_mode = enable;
@@ -165,6 +186,9 @@ init(void)
 
   /* Initialise the CRC engine in .15.4 mode */
   crc_init();
+
+  /* Initialise the packet format */
+  packet_init();
 
   return RADIO_TX_OK;
 }
