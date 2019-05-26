@@ -196,6 +196,9 @@ init(void)
    */
   nrf_radio_modecnf0_set(true, RADIO_MODECNF0_DTX_Center);
 
+  /* Start the RF driver process */
+  process_start(&nrf52840_ieee_rf_process, NULL);
+
   return RADIO_TX_OK;
 }
 /*---------------------------------------------------------------------------*/
