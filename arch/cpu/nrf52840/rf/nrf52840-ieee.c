@@ -501,6 +501,8 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)RADIO_DELAY_BEFORE_DETECT;
     return RADIO_RESULT_OK;
 
+    /* ToDo: Add RADIO_CONST_MAX_PAYLOAD_LEN after #974 */
+
   case RADIO_PARAM_PAN_ID:
   case RADIO_PARAM_16BIT_ADDR:
   default:
