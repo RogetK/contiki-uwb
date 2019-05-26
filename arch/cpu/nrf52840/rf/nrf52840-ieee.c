@@ -391,7 +391,19 @@ prepare(const void *payload, unsigned short payload_len)
 static int
 transmit(unsigned short transmit_len)
 {
-  /* ToDo: Perform CCA before TX if send_on_cca */
+  if(transmit_len > MAX_PAYLOAD_LEN) {
+    LOG_ERR("transmit: too long (%u bytes)\n", transmit_len);
+    return RADIO_TX_ERR;
+  }
+
+  on();
+
+  if(send_on_cca) {
+    if(channel_clear() == NRF52840_CCA_CLEAR) {
+      return RADIO_TX_COLLISION;
+    }
+  }
+
   return RADIO_TX_OK;
 }
 /*---------------------------------------------------------------------------*/
