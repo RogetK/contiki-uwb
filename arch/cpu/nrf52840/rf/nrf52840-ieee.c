@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 /*---------------------------------------------------------------------------*/
 /* Log configuration */
 #include "sys/log.h"
@@ -86,6 +87,13 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define CRC_IEEE802154_LEN             2
 #define CRC_IEEE802154_POLY      0x11021
 #define CRC_IEEE802154_INIT            0
+/*---------------------------------------------------------------------------*/
+typedef struct tx_buf_s {
+  uint8_t phr;
+  uint8_t mpdu[MAX_PAYLOAD_LEN];
+} tx_buf_t;
+
+static tx_buf_t tx_buf;
 /*---------------------------------------------------------------------------*/
 typedef struct cca_cfg_s {
   uint8_t cca_mode;
@@ -224,6 +232,19 @@ init(void)
 static int
 prepare(const void *payload, unsigned short payload_len)
 {
+  LOG_DBG("Prepare 0x%02x bytes\n", payload_len + FCS_LEN);
+
+  if(payload_len > MAX_PAYLOAD_LEN) {
+    LOG_ERR("Too long: %u bytes, max %u\n", payload_len, MAX_PAYLOAD_LEN);
+    return RADIO_TX_ERR;
+  }
+
+  /* Populate the PHR. Packet length, including the FCS */
+  tx_buf.phr = (uint8_t)payload_len + FCS_LEN;
+
+  /* Copy the payload over */
+  memcpy(tx_buf.mpdu, payload, payload_len);
+
   return RADIO_TX_OK;
 }
 /*---------------------------------------------------------------------------*/
