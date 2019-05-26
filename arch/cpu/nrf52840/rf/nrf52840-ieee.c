@@ -102,7 +102,7 @@ set_channel(uint8_t channel)
 }
 /*---------------------------------------------------------------------------*/
 static void
-cca_reconfigure()
+cca_reconfigure(void)
 {
   uint32_t ccactrl;
 
