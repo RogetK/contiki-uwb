@@ -119,6 +119,8 @@ set_poll_mode(bool enable)
 static int
 init(void)
 {
+  nrf_radio_mode_set(NRF_RADIO_MODE_IEEE802154_250KBIT);
+
   set_channel(IEEE802154_DEFAULT_CHANNEL);
 
   last_frame_timestamp = 0;
