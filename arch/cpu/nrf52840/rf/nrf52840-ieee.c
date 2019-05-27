@@ -303,7 +303,9 @@ enter_rx(void)
   /* Trigger the Start task */
   nrf_radio_task_trigger(NRF_RADIO_TASK_START);
 
-  LOG_DBG("Enter RX: %u\n", nrf_radio_state_get());
+  LOG_DBG("PACKETPTR=0x%08lx (rx_buf @ 0x%08lx), State=%u\n",
+          (uint32_t)nrf_radio_packetptr_get(), (uint32_t)&rx_buf,
+          nrf_radio_state_get());
 }
 /*---------------------------------------------------------------------------*/
 /* Retrieve an RSSI sample. The radio must be in RX mode */
