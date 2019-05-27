@@ -98,6 +98,11 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define SYMBOL_DURATION_USEC          16
 #define SYMBOL_DURATION_RTIMER        US_TO_RTIMERTICKS(SYMBOL_DURATION_USEC)
 /*---------------------------------------------------------------------------*/
+/* Timestamping control */
+#if MAC_CONF_WITH_TSCH
+#define TIMESTAMPING_WITH_PPI 1
+#endif
+/*---------------------------------------------------------------------------*/
 typedef struct tx_buf_s {
   uint8_t phr;
   uint8_t mpdu[MAX_PAYLOAD_LEN];
@@ -356,10 +361,12 @@ on(void)
     power_on_and_configure();
   }
 
+#if TIMESTAMPING_WITH_PPI
   nrf_timer_mode_set(NRF_TIMER0, NRF_TIMER_MODE_COUNTER);
   nrf_timer_task_trigger(NRF_TIMER0, NRF_TIMER_TASK_START);
 
   nrf_ppi_channel_enable(NRF_PPI_CHANNEL20);
+#endif
 
   enter_rx();
 
