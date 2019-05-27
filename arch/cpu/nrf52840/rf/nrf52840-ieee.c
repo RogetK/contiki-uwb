@@ -3,6 +3,8 @@
 #include "nrf52840-ieee.h"
 #include "dev/radio.h"
 #include "sys/energest.h"
+#include "sys/int-master.h"
+#include "sys/critical.h"
 #include "net/netstack.h"
 #include "net/packetbuf.h"
 #include "net/mac/tsch/tsch.h"
@@ -190,7 +192,10 @@ packet_init(void)
 static void
 setup_interrupts(void)
 {
+  int_master_status_t stat;
   nrf_radio_int_mask_t interrupts = 0;
+
+  stat = critical_enter();
 
   if(!poll_mode) {
     nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
@@ -198,10 +203,12 @@ setup_interrupts(void)
   }
 
   if(interrupts) {
-    nrf_radio_int_enable(interrupts);
     NVIC_ClearPendingIRQ(RADIO_IRQn);
+    nrf_radio_int_enable(interrupts);
     NVIC_EnableIRQ(RADIO_IRQn);
   }
+
+  critical_exit(stat);
 }
 /*---------------------------------------------------------------------------*/
 static void
