@@ -298,11 +298,11 @@ enter_rx(void)
 {
   nrf_radio_state_t curr_state = nrf_radio_state_get();
 
-  LOG_DBG("Enter RX, state=%u\n", curr_state);
+  LOG_INFO("Enter RX, state=%u", curr_state);
 
   /* Do nothing if we are already in RX */
   if(curr_state == NRF_RADIO_STATE_RX) {
-    LOG_DBG("Was in RX\n");
+    LOG_DBG_(". Was in RX\n");
     return;
   }
 
@@ -320,14 +320,16 @@ enter_rx(void)
 
     /* Block till RXRU is done */
     while(!nrf_radio_event_check(NRF_RADIO_EVENT_RXREADY));
+    LOG_INFO_("--->%u", nrf_radio_state_get());
   }
 
   /* Trigger the Start task */
   nrf_radio_task_trigger(NRF_RADIO_TASK_START);
 
-  LOG_DBG("PACKETPTR=0x%08lx (rx_buf @ 0x%08lx), State=%u\n",
-          (uint32_t)nrf_radio_packetptr_get(), (uint32_t)&rx_buf,
-          nrf_radio_state_get());
+  LOG_INFO_("--->%u\n", nrf_radio_state_get());
+
+  LOG_DBG("PACKETPTR=0x%08lx (rx_buf @ 0x%08lx)\n",
+          (uint32_t)nrf_radio_packetptr_get(), (uint32_t)&rx_buf);
 }
 /*---------------------------------------------------------------------------*/
 /* Retrieve an RSSI sample. The radio must be in RX mode */
@@ -466,7 +468,7 @@ init(void)
 static int
 prepare(const void *payload, unsigned short payload_len)
 {
-  LOG_DBG("Prepare %u bytes\n", payload_len + FCS_LEN);
+  LOG_INFO("Prepare %u bytes\n", payload_len + FCS_LEN);
 
   if(payload_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("Too long: %u bytes, max %u\n", payload_len, MAX_PAYLOAD_LEN);
@@ -487,7 +489,7 @@ transmit(unsigned short transmit_len)
 {
   int i;
 
-  LOG_DBG("TX %u bytes, channel=%u\n", transmit_len, get_channel());
+  LOG_INFO("TX %u bytes, channel=%u\n", transmit_len, get_channel());
 
   if(transmit_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("TX: too long (%u bytes)\n", transmit_len);
