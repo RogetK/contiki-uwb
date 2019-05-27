@@ -281,10 +281,12 @@ power_on_and_configure(void)
 static void
 enter_rx(void)
 {
-  LOG_DBG("Enter RX\n");
+  nrf_radio_state_t curr_state = nrf_radio_state_get();
+
+  LOG_DBG("Enter RX, state=%u\n", curr_state);
 
   /* Do nothing if we are already in RX */
-  if(nrf_radio_state_get() == NRF_RADIO_STATE_RX) {
+  if(curr_state == NRF_RADIO_STATE_RX) {
     LOG_DBG("Was in RX\n");
     return;
   }
@@ -295,12 +297,14 @@ enter_rx(void)
 
   rx_events_clear();
 
-  /* Clear EVENTS_RXREADY and trigger RXEN */
-  nrf_radio_event_clear(NRF_RADIO_EVENT_RXREADY);
-  nrf_radio_task_trigger(NRF_RADIO_TASK_RXEN);
+  if(curr_state == NRF_RADIO_STATE_DISABLED) {
+    /* Clear EVENTS_RXREADY and trigger RXEN */
+    nrf_radio_event_clear(NRF_RADIO_EVENT_RXREADY);
+    nrf_radio_task_trigger(NRF_RADIO_TASK_RXEN);
 
-  /* Block till RXRU is done */
-  while(!nrf_radio_event_check(NRF_RADIO_EVENT_RXREADY));
+    /* Block till RXRU is done */
+    while(!nrf_radio_event_check(NRF_RADIO_EVENT_RXREADY));
+  }
 
   /* Trigger the Start task */
   nrf_radio_task_trigger(NRF_RADIO_TASK_START);
