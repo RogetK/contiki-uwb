@@ -101,14 +101,26 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define CRC_IEEE802154_INIT            0
 /*---------------------------------------------------------------------------*/
 #define SYMBOL_DURATION_USEC          16
-#define SYMBOL_DURATION_RTIMER        US_TO_RTIMERTICKS(SYMBOL_DURATION_USEC)
+#define SYMBOL_DURATION_RTIMER         1
+#define BYTE_DURATION_RTIMER          (SYMBOL_DURATION_RTIMER * 2)
 /*---------------------------------------------------------------------------*/
 /* Timestamping control */
 #if MAC_CONF_WITH_TSCH
 #define TIMESTAMPING_WITH_PPI 1
 #endif
 
-static volatile rtimer_clock_t ts_dbg_framestart, ts_dbg_crcok;
+/* Timestamp in rtimer ticks of the reception of the PHR (FRAMESTART) */
+static volatile rtimer_clock_t ts_dbg_framestart;
+
+/* Timestamp in rtimer ticks of the CRCOK event */
+static volatile rtimer_clock_t ts_dbg_crcok;
+
+/*
+ * Timestamp in rtimer ticks of the reception of the SFD
+ * The SFD was received 1 byte before FRAMESTART, therefore all we need to do
+ * is subtract 2 symbols (2 rtimer ticks) from ts_dbg_framestart.
+ */
+static volatile rtimer_clock_t ts_last_frame;
 /*---------------------------------------------------------------------------*/
 typedef struct tx_buf_s {
   uint8_t phr;
@@ -351,24 +363,6 @@ rssi_read(void)
   return -((int8_t)rssi_sample);
 }
 /*---------------------------------------------------------------------------*/
-/* ToDo:
- * - Deal with the conversion between CC and rtimer ticks
- * - Deal with the time delta between SFD reception and EVENTS_END
- */
-#define CONVERT(z) (z)
-
-static rtimer_clock_t
-last_timestamp_read(void)
-{
-  rtimer_clock_t timestamp;
-  uint32_t timestamp_cc;
-
-  timestamp_cc = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL2);
-  timestamp = CONVERT(timestamp_cc);
-
-  return timestamp;
-}
-/*---------------------------------------------------------------------------*/
 /*
  * Convert the hardware-reported LQI to 802.15.4 range using an 8-bit
  * saturating multiplication by 4, as per the Product Spec.
@@ -445,6 +439,9 @@ init(void)
 
   last_rssi = 0;
   last_lqi = 0;
+  ts_dbg_framestart = 0;
+  ts_dbg_crcok = 0;
+  ts_last_frame = 0;
 
   /* Request the HF clock */
   nrf_clock_event_clear(NRF_CLOCK_EVENT_HFCLKSTARTED);
@@ -583,10 +580,18 @@ read_frame(void *buf, unsigned short bufsize)
 
   diff = ts_dbg_crcok - ts_dbg_framestart;
 
-  LOG_INFO("Read frame, len=%d, %lu-%lu=%lu (%u)\n",
-           rx_buf.phr, ts_dbg_crcok, ts_dbg_framestart, diff, 32 * rx_buf.phr);
+  LOG_DBG("Read frame, len=%d bytes (%u symbols):", rx_buf.phr, 2 * rx_buf.phr);
+  LOG_DBG_("CRCOK - FRAMESTART = %lu-%lu=%lu symbols\n", ts_dbg_crcok,
+           ts_dbg_framestart, diff);
   LOG_INFO("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
            last_lqi);
+
+  /*
+   * Timestamp in rtimer ticks of the reception of the SFD. The SFD was
+   * received 1 byte before the PHR (FRAMESTART event), therefore all we need
+   * to do is subtract 2 symbols (2 rtimer ticks) from ts_dbg_framestart.
+   */
+  ts_last_frame = ts_dbg_framestart - BYTE_DURATION_RTIMER;
 
   enter_rx();
 
@@ -773,7 +778,7 @@ get_object(radio_param_t param, void *dest, size_t size)
     if(size != sizeof(rtimer_clock_t) || !dest) {
       return RADIO_RESULT_INVALID_VALUE;
     }
-    *(rtimer_clock_t *)dest = last_timestamp_read();
+    *(rtimer_clock_t *)dest = ts_last_frame;
     return RADIO_RESULT_OK;
   }
 
@@ -845,6 +850,7 @@ RADIO_IRQHandler(void)
     if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK)) {
       ts_dbg_crcok = RTIMER_NOW();
       nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
+      nrf_radio_event_clear(NRF_RADIO_EVENT_FRAMESTART);
       process_poll(&nrf52840_ieee_rf_process);
     }
 
