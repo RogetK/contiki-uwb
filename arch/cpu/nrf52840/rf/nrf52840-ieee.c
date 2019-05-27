@@ -421,12 +421,6 @@ channel_clear(void)
   /* We are now in RX. Send CCASTART */
   nrf_radio_task_trigger(NRF_RADIO_TASK_CCASTART);
 
-  /*
-   * Wait 8 symbol periods - 128 usec. Conveniently, 1 rtimer tick is 16us,
-   * exactly equal to the duration of a symbol
-   */
-  RTIMER_BUSYWAIT(8 * SYMBOL_DURATION_RTIMER);
-
   while((nrf_radio_event_check(NRF_RADIO_EVENT_CCABUSY) == false) &&
         (nrf_radio_event_check(NRF_RADIO_EVENT_CCAIDLE) == false));
 
