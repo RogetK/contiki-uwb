@@ -302,7 +302,8 @@ enter_rx(void)
 
   /* Do nothing if we are already in RX */
   if(curr_state == NRF_RADIO_STATE_RX) {
-    LOG_DBG_(". Was in RX\n");
+    LOG_DBG_(". Was in RX");
+    LOG_INFO_("\n");
     return;
   }
 
