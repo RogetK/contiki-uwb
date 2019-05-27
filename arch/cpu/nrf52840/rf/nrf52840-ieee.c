@@ -290,8 +290,10 @@ enter_rx(void)
   }
 
   /* Prepare the RX buffer */
-  memset(&rx_buf, 0, sizeof(rx_buf));
+  rx_buf_clear();
   nrf_radio_packetptr_set(&rx_buf);
+
+  rx_events_clear();
 
   /* Clear EVENTS_RXREADY and trigger RXEN */
   nrf_radio_event_clear(NRF_RADIO_EVENT_RXREADY);
@@ -548,7 +550,7 @@ read_frame(void *buf, unsigned short bufsize)
 
   if(payload_len < ACK_PAYLOAD_MIN_LEN || payload_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("Incorrect length: %d\n", payload_len);
-    rx_buf_clear();
+    enter_rx();
     return 0;
   }
 
@@ -558,7 +560,10 @@ read_frame(void *buf, unsigned short bufsize)
   packetbuf_set_attr(PACKETBUF_ATTR_RSSI, last_rssi);
   packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, last_lqi);
 
-  rx_buf_clear();
+  LOG_DBG("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
+          last_lqi);
+
+  enter_rx();
 
   return payload_len;
 }
