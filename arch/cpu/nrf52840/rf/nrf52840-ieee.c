@@ -459,7 +459,7 @@ transmit(unsigned short transmit_len)
   on();
 
   if(send_on_cca) {
-    if(channel_clear() == NRF52840_CCA_CLEAR) {
+    if(channel_clear() == NRF52840_CCA_BUSY) {
       return RADIO_TX_COLLISION;
     }
   }
