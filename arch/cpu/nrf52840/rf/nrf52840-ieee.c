@@ -463,8 +463,12 @@ prepare(const void *payload, unsigned short payload_len)
 static int
 transmit(unsigned short transmit_len)
 {
+  int i;
+
+  LOG_DBG("TX %u bytes, channel=%u\n", transmit_len, get_channel());
+
   if(transmit_len > MAX_PAYLOAD_LEN) {
-    LOG_ERR("transmit: too long (%u bytes)\n", transmit_len);
+    LOG_ERR("TX: too long (%u bytes)\n", transmit_len);
     return RADIO_TX_ERR;
   }
 
@@ -472,28 +476,53 @@ transmit(unsigned short transmit_len)
 
   if(send_on_cca) {
     if(channel_clear() == NRF52840_CCA_BUSY) {
+      LOG_DBG("TX: Busy\n");
       return RADIO_TX_COLLISION;
     }
   }
 
+  LOG_DBG("Transmit: %u bytes=000000", tx_buf.phr);
+  for(i = 0; i < tx_buf.phr - 2; i++) {
+    LOG_DBG_(" %02x", tx_buf.mpdu[i]);
+  }
+  LOG_DBG_("\n");
+
   /* Start the transmission */
   ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
 
-  nrf_radio_task_trigger(NRF_RADIO_TASK_TXEN);
+  LOG_DBG("TX Start. State %u", nrf_radio_state_get());
 
   /* Pointer to the TX buffer in PACKETPTR before task START */
   nrf_radio_packetptr_set(&tx_buf);
 
+  /* Clear TX-related events */
+  nrf_radio_event_clear(NRF_RADIO_EVENT_END);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_PHYEND);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_TXREADY);
+
+  nrf_radio_task_trigger(NRF_RADIO_TASK_TXEN);
+
+  LOG_DBG_("--->%u", nrf_radio_state_get());
+
   /* Wait for the rest of the TXRU, if needed */
-  while(nrf_radio_event_check(NRF_RADIO_EVENT_TXREADY) == false);
+  while(nrf_radio_state_get() != NRF_RADIO_STATE_TXIDLE);
+
+  LOG_DBG_("--->%u", nrf_radio_state_get());
 
   /* Trigger the Start task */
   nrf_radio_task_trigger(NRF_RADIO_TASK_START);
 
+  LOG_DBG_("--->%u\n", nrf_radio_state_get());
+
   /* Wait for TX to complete */
-  while(nrf_radio_event_check(NRF_RADIO_EVENT_PHYEND) == false);
+  while(nrf_radio_state_get() == NRF_RADIO_STATE_TX);
 
   ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
+
+  LOG_DBG("TX: Done\n");
+
+  /* Disable TX, enter RX */
+  nrf_radio_task_trigger(NRF_RADIO_TASK_DISABLE);
 
   enter_rx();
 
