@@ -274,6 +274,11 @@ power_on_and_configure(void)
 static void
 enter_rx(void)
 {
+  /* Do nothing if we are already in RX */
+  if(nrf_radio_state_get() == NRF_RADIO_STATE_RX) {
+    return;
+  }
+
   /* Prepare the RX buffer */
   memset(&rx_buf, 0, sizeof(rx_buf));
   nrf_radio_packetptr_set(&rx_buf);
