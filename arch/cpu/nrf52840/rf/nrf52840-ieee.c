@@ -382,7 +382,7 @@ channel_clear(void)
 {
   bool busy, idle;
 
-  LOG_DBG("channel_clear()");
+  LOG_DBG("channel_clear\n");
 
   on();
 
@@ -390,6 +390,8 @@ channel_clear(void)
   nrf_radio_event_clear(NRF_RADIO_EVENT_CCABUSY);
   nrf_radio_event_clear(NRF_RADIO_EVENT_CCAIDLE);
   nrf_radio_event_clear(NRF_RADIO_EVENT_CCASTOPPED);
+
+  LOG_DBG("channel_clear: CCACTRL=0x%08lx\n", NRF_RADIO->CCACTRL);
 
   /* We are now in RX. Send CCASTART */
   nrf_radio_task_trigger(NRF_RADIO_TASK_CCASTART);
