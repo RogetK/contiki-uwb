@@ -386,6 +386,11 @@ channel_clear(void)
 
   on();
 
+  /* Clear previous CCA-related events, if any */
+  nrf_radio_event_clear(NRF_RADIO_EVENT_CCABUSY);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_CCAIDLE);
+  nrf_radio_event_clear(NRF_RADIO_EVENT_CCASTOPPED);
+
   /* We are now in RX. Send CCASTART */
   nrf_radio_task_trigger(NRF_RADIO_TASK_CCASTART);
 
