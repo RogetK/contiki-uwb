@@ -276,8 +276,11 @@ power_on_and_configure(void)
 static void
 enter_rx(void)
 {
+  LOG_DBG("Enter RX\n");
+
   /* Do nothing if we are already in RX */
   if(nrf_radio_state_get() == NRF_RADIO_STATE_RX) {
+    LOG_DBG("Was in RX\n");
     return;
   }
 
@@ -293,6 +296,8 @@ enter_rx(void)
 
   /* Trigger the Start task */
   nrf_radio_task_trigger(NRF_RADIO_TASK_START);
+
+  LOG_DBG("Enter RX: %u\n", nrf_radio_state_get());
 }
 /*---------------------------------------------------------------------------*/
 /* Retrieve an RSSI sample. The radio must be in RX mode */
@@ -344,7 +349,10 @@ lqi_convert_to_802154_scale(uint8_t lqi_hw)
 static int
 on(void)
 {
+  LOG_DBG("On\n");
+
   if(radio_is_powered() == false) {
+    LOG_DBG("Not powered\n");
     power_on_and_configure();
   }
 
@@ -393,6 +401,8 @@ channel_clear(void)
 static int
 init(void)
 {
+  LOG_DBG("Init\n");
+
   last_rssi = 0;
   last_lqi = 0;
 
@@ -415,7 +425,7 @@ init(void)
 static int
 prepare(const void *payload, unsigned short payload_len)
 {
-  LOG_DBG("Prepare 0x%02x bytes\n", payload_len + FCS_LEN);
+  LOG_DBG("Prepare %u bytes\n", payload_len + FCS_LEN);
 
   if(payload_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("Too long: %u bytes, max %u\n", payload_len, MAX_PAYLOAD_LEN);
@@ -508,7 +518,7 @@ read_frame(void *buf, unsigned short bufsize)
 static int
 receiving_packet(void)
 {
-  LOG_DBG("Receiving\n");
+  LOG_DBG("Receiving: ");
 
   /*
    * Start of reception generates the FRAMESTART event. End of reception
@@ -517,8 +527,11 @@ receiving_packet(void)
    */
   if((nrf_radio_event_check(NRF_RADIO_EVENT_FRAMESTART) == true) &&
      (nrf_radio_event_check(NRF_RADIO_EVENT_END) == false)) {
+    LOG_DBG_("Yes\n");
     return NRF52840_RECEIVING_YES;
   }
+
+  LOG_DBG_("No\n");
   return NRF52840_RECEIVING_NO;
 }
 /*---------------------------------------------------------------------------*/
@@ -734,6 +747,7 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
+    LOG_DBG("Polled\n");
     do {
       watchdog_periodic();
       packetbuf_clear();
