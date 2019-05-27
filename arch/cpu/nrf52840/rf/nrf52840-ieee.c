@@ -182,9 +182,7 @@ packet_init(void)
   conf.lflen = 8; /* Length field, in bits */
   conf.s1incl = false;
   conf.plen = NRF_RADIO_PREAMBLE_LENGTH_32BIT_ZERO;
-
-  /* The Nordic driver uses true for crcinc, but this does not make sense */
-  conf.crcinc = false;
+  conf.crcinc = true;
   conf.big_endian = false;
   conf.whiteen = false;
   conf.maxlen = MPDU_LEN;
