@@ -411,6 +411,27 @@ transmit(unsigned short transmit_len)
     }
   }
 
+  /* Start the transmission */
+  ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
+
+  nrf_radio_task_trigger(NRF_RADIO_TASK_TXEN);
+
+  /* Pointer to the TX buffer in PACKETPTR before task START */
+  nrf_radio_packetptr_set(&tx_buf);
+
+  /* Wait for the rest of the TXRU, if needed */
+  while(nrf_radio_event_check(NRF_RADIO_EVENT_TXREADY) == false);
+
+  /* Trigger the Start task */
+  nrf_radio_task_trigger(NRF_RADIO_TASK_START);
+
+  /* Wait for TX to complete */
+  while(nrf_radio_event_check(NRF_RADIO_EVENT_PHYEND) == false);
+
+  ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
+
+  enter_rx();
+
   return RADIO_TX_OK;
 }
 /*---------------------------------------------------------------------------*/
