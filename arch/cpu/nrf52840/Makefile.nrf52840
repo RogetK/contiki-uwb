@@ -64,7 +64,6 @@ NRF52_SDK_C_SRCS += components/boards/boards.c \
   modules/nrfx/drivers/src/nrfx_clock.c \
   modules/nrfx/drivers/src/nrfx_rtc.c \
   modules/nrfx/drivers/src/nrfx_gpiote.c \
-  modules/nrfx/drivers/src/nrfx_timer.c \
   modules/nrfx/drivers/src/nrfx_wdt.c \
   modules/nrfx/drivers/src/nrfx_uart.c \
   modules/nrfx/drivers/src/nrfx_rng.c \
