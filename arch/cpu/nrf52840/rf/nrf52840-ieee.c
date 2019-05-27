@@ -282,7 +282,17 @@ power_on_and_configure(void)
   configure();
 }
 /*---------------------------------------------------------------------------*/
-/* The caller must first make sure the radio is powered and configured */
+/*
+ * The caller must first make sure the radio is powered and configured.
+ *
+ * When we enter this function we can be in one of the following states:
+ * -       STATE_RX: We were already in RX. Do nothing
+ * -   STATE_RXIDLE: A reception just finished and we reverted to RXIDLE.
+ *                   We just need to send the START task.
+ * -   STATE_TXIDLE: A TX just finished and we reverted to TXIDLE.
+ *                   We just need to send the START task.
+ * - STATE_DISABLED: We just turned on. We need to request radio rampup
+ */
 static void
 enter_rx(void)
 {
@@ -302,7 +312,8 @@ enter_rx(void)
 
   rx_events_clear();
 
-  if(curr_state == NRF_RADIO_STATE_DISABLED) {
+  if((curr_state != NRF_RADIO_STATE_RXIDLE) &&
+     (curr_state != NRF_RADIO_STATE_TXIDLE)) {
     /* Clear EVENTS_RXREADY and trigger RXEN */
     nrf_radio_event_clear(NRF_RADIO_EVENT_RXREADY);
     nrf_radio_task_trigger(NRF_RADIO_TASK_RXEN);
