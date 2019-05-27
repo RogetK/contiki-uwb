@@ -56,8 +56,13 @@ static volatile bool poll_mode = false;
 
 /*
  * The last frame's RSSI and LQI
- * ToDO: nrf52840 won't write this in the FCS like other radios will. Need to
- * figure out a way to find and store it
+ *
+ * ToDO: Unlike other radios that write RSSI and LQI in the FCS, the nrf52840
+ * only writes one value. This is a "hardware-reported" value, which needs
+ * converted to the .15.4 standard LQI scale using an 8-bit saturating
+ * multiplication by 4 (see the Product Spec). This value is based on the
+ * median of three RSSI samples taken during frame reception. For now we treat
+ * this value as the actual RSSI reported as negative dBm.
  */
 static int8_t last_rssi;
 static uint8_t last_lqi;
@@ -560,6 +565,7 @@ read_frame(void *buf, unsigned short bufsize)
 
   memcpy(buf, rx_buf.mpdu, payload_len);
   last_lqi = lqi_convert_to_802154_scale(rx_buf.mpdu[payload_len]);
+  last_rssi = -((int8_t)rx_buf.mpdu[payload_len]);
 
   packetbuf_set_attr(PACKETBUF_ATTR_RSSI, last_rssi);
   packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, last_lqi);
