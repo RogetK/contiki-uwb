@@ -293,7 +293,8 @@ enter_rx(void)
   memset(&rx_buf, 0, sizeof(rx_buf));
   nrf_radio_packetptr_set(&rx_buf);
 
-  /* Trigger RXEN */
+  /* Clear EVENTS_RXREADY and trigger RXEN */
+  nrf_radio_event_clear(NRF_RADIO_EVENT_RXREADY);
   nrf_radio_task_trigger(NRF_RADIO_TASK_RXEN);
 
   /* Block till RXRU is done */
