@@ -11,6 +11,7 @@
 #include "nrf_radio.h"
 #include "nrf_ppi.h"
 #include "nrf_timer.h"
+#include "nrf_clock.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -394,6 +395,10 @@ init(void)
 {
   last_rssi = 0;
   last_lqi = 0;
+
+  /* Request the HF clock */
+  nrf_clock_event_clear(NRF_CLOCK_EVENT_HFCLKSTARTED);
+  nrf_clock_task_trigger(NRF_CLOCK_TASK_HFCLKSTART);
 
   /* Start the RF driver process */
   process_start(&nrf52840_ieee_rf_process, NULL);
