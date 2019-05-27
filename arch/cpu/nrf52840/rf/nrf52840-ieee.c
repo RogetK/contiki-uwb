@@ -68,7 +68,7 @@ static uint8_t send_on_cca = RADIO_TX_MODE_SEND_ON_CCA;
 PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 /*---------------------------------------------------------------------------*/
 #ifndef NRF52840_CCA_MODE
-#define NRF52840_CCA_MODE RADIO_CCACTRL_CCAMODE_CarrierOrEdMode
+#define NRF52840_CCA_MODE RADIO_CCACTRL_CCAMODE_CarrierAndEdMode
 #endif
 
 #ifndef NRF52840_CCA_ED_THRESHOLD
