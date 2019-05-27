@@ -469,7 +469,7 @@ init(void)
 static int
 prepare(const void *payload, unsigned short payload_len)
 {
-  LOG_INFO("Prepare %u bytes\n", payload_len + FCS_LEN);
+  LOG_INFO("Prepare %u bytes\n", payload_len);
 
   if(payload_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("Too long: %u bytes, max %u\n", payload_len, MAX_PAYLOAD_LEN);
@@ -490,7 +490,7 @@ transmit(unsigned short transmit_len)
 {
   int i;
 
-  LOG_INFO("TX %u bytes, channel=%u\n", transmit_len, get_channel());
+  LOG_INFO("TX %u bytes + FCS, channel=%u\n", transmit_len, get_channel());
 
   if(transmit_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("TX: too long (%u bytes)\n", transmit_len);
