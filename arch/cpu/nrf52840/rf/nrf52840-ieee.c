@@ -800,18 +800,16 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
+
     LOG_DBG("Polled\n");
-    do {
-      watchdog_periodic();
-      packetbuf_clear();
-      len = read_frame(packetbuf_dataptr(), PACKETBUF_SIZE);
 
-      if(len > 0) {
-        packetbuf_set_datalen(len);
-
-        NETSTACK_MAC.input();
-      }
-    } while(len > 0);
+    watchdog_periodic();
+    packetbuf_clear();
+    len = read_frame(packetbuf_dataptr(), PACKETBUF_SIZE);
+    if(len > 0) {
+      packetbuf_set_datalen(len);
+      NETSTACK_MAC.input();
+    }
   }
 
   PROCESS_END();
