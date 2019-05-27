@@ -278,14 +278,14 @@ enter_rx(void)
   memset(&rx_buf, 0, sizeof(rx_buf));
   nrf_radio_packetptr_set(&rx_buf);
 
-  /*
-   * Enable the RXREADY->START shortcut. Immediate transition to the RX state
-   * after RXRU has completed
-   */
-  nrf_radio_shorts_enable(NRF_RADIO_SHORT_RXREADY_START_MASK);
-
-  /* Trigger RXRU */
+  /* Trigger RXEN */
   nrf_radio_task_trigger(NRF_RADIO_TASK_RXEN);
+
+  /* Block till RXRU is done */
+  while(!nrf_radio_event_check(NRF_RADIO_EVENT_RXREADY));
+
+  /* Trigger the Start task */
+  nrf_radio_task_trigger(NRF_RADIO_TASK_START);
 }
 /*---------------------------------------------------------------------------*/
 /* Retrieve an RSSI sample. The radio must be in RX mode */
