@@ -595,8 +595,6 @@ receiving_packet(void)
 static int
 pending_packet(void)
 {
-  LOG_DBG("Pending\n");
-
   /* END generated, CRCOK generated, and there are bytes in the RX Buf */
   if((rx_buf.phr > 0) &&
      (nrf_radio_event_check(NRF_RADIO_EVENT_END) == true) &&
