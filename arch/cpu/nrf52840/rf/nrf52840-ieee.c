@@ -408,7 +408,7 @@ channel_clear(void)
   busy = nrf_radio_event_check(NRF_RADIO_EVENT_CCABUSY);
   idle = nrf_radio_event_check(NRF_RADIO_EVENT_CCAIDLE);
 
-  LOG_ERR("channel_clear: I=%u, B=%u\n", idle, busy);
+  LOG_DBG("channel_clear: I=%u, B=%u\n", idle, busy);
 
   if(busy) {
     return NRF52840_CCA_BUSY;
