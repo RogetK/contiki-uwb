@@ -402,6 +402,9 @@ channel_clear(void)
    */
   RTIMER_BUSYWAIT(8 * SYMBOL_DURATION_RTIMER);
 
+  while((nrf_radio_event_check(NRF_RADIO_EVENT_CCABUSY) == false) &&
+        (nrf_radio_event_check(NRF_RADIO_EVENT_CCAIDLE) == false));
+
   busy = nrf_radio_event_check(NRF_RADIO_EVENT_CCABUSY);
   idle = nrf_radio_event_check(NRF_RADIO_EVENT_CCAIDLE);
 
