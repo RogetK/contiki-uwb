@@ -107,6 +107,8 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #if MAC_CONF_WITH_TSCH
 #define TIMESTAMPING_WITH_PPI 1
 #endif
+
+static volatile rtimer_clock_t ts_dbg_framestart, ts_dbg_crcok;
 /*---------------------------------------------------------------------------*/
 typedef struct tx_buf_s {
   uint8_t phr;
@@ -211,7 +213,8 @@ setup_interrupts(void)
 
   if(!poll_mode) {
     nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
-    interrupts |= NRF_RADIO_INT_CRCOK_MASK;
+    nrf_radio_event_clear(NRF_RADIO_EVENT_FRAMESTART);
+    interrupts |= NRF_RADIO_INT_CRCOK_MASK | NRF_RADIO_INT_FRAMESTART_MASK;
   }
 
   if(interrupts) {
@@ -270,9 +273,6 @@ configure(void)
    * The Nordic driver is using DTX=0, but this is against the PS (v1.1 p351)
    */
   nrf_radio_modecnf0_set(true, RADIO_MODECNF0_DTX_Center);
-
-  /* Enabled interrupts, if applicable */
-  setup_interrupts();
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -311,7 +311,9 @@ enter_rx(void)
   rx_buf_clear();
   nrf_radio_packetptr_set(&rx_buf);
 
+  /* Make sure the correct interrupts are enabled */
   rx_events_clear();
+  setup_interrupts();
 
   if((curr_state != NRF_RADIO_STATE_RXIDLE) &&
      (curr_state != NRF_RADIO_STATE_TXIDLE)) {
@@ -559,6 +561,7 @@ static int
 read_frame(void *buf, unsigned short bufsize)
 {
   int payload_len;
+  rtimer_clock_t diff;
 
   /* Clear all events */
   rx_events_clear();
@@ -578,6 +581,10 @@ read_frame(void *buf, unsigned short bufsize)
   packetbuf_set_attr(PACKETBUF_ATTR_RSSI, last_rssi);
   packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, last_lqi);
 
+  diff = ts_dbg_crcok - ts_dbg_framestart;
+
+  LOG_INFO("Read frame, len=%d, %lu-%lu=%lu (%u)\n",
+           rx_buf.phr, ts_dbg_crcok, ts_dbg_framestart, diff, 32 * rx_buf.phr);
   LOG_INFO("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
            last_lqi);
 
@@ -835,8 +842,17 @@ void
 RADIO_IRQHandler(void)
 {
   if(!poll_mode) {
-    nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
-    process_poll(&nrf52840_ieee_rf_process);
+    if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK)) {
+      ts_dbg_crcok = RTIMER_NOW();
+      nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
+      process_poll(&nrf52840_ieee_rf_process);
+    }
+
+    if(nrf_radio_event_check(NRF_RADIO_EVENT_FRAMESTART)) {
+      /* Unack the interrupt */
+      ts_dbg_framestart = RTIMER_NOW();
+      nrf_radio_int_disable(NRF_RADIO_INT_FRAMESTART_MASK);
+    }
   }
 }
 /*---------------------------------------------------------------------------*/
