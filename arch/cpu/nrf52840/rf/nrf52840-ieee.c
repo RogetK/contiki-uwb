@@ -380,7 +380,7 @@ on(void)
 static int
 channel_clear(void)
 {
-  bool busy, idle, stopped;
+  bool busy, idle;
 
   LOG_DBG("channel_clear()");
 
@@ -397,9 +397,8 @@ channel_clear(void)
 
   busy = nrf_radio_event_check(NRF_RADIO_EVENT_CCABUSY);
   idle = nrf_radio_event_check(NRF_RADIO_EVENT_CCAIDLE);
-  stopped = nrf_radio_event_check(NRF_RADIO_EVENT_CCASTOPPED);
 
-  LOG_DBG("I=%u, B=%u, S=%u\n", idle, busy, stopped);
+  LOG_ERR("channel_clear: I=%u, B=%u\n", idle, busy);
 
   if(busy) {
     return NRF52840_CCA_BUSY;
