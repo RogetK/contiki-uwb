@@ -584,8 +584,8 @@ read_frame(void *buf, unsigned short bufsize)
   packetbuf_set_attr(PACKETBUF_ATTR_RSSI, last_rssi);
   packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, last_lqi);
 
-  LOG_DBG("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
-          last_lqi);
+  LOG_INFO("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
+           last_lqi);
 
   enter_rx();
 
