@@ -94,6 +94,9 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define CRC_IEEE802154_POLY      0x11021
 #define CRC_IEEE802154_INIT            0
 /*---------------------------------------------------------------------------*/
+#define SYMBOL_DURATION_USEC          16
+#define SYMBOL_DURATION_RTIMER        US_TO_RTIMERTICKS(SYMBOL_DURATION_USEC)
+/*---------------------------------------------------------------------------*/
 typedef struct tx_buf_s {
   uint8_t phr;
   uint8_t mpdu[MAX_PAYLOAD_LEN];
@@ -360,6 +363,31 @@ on(void)
 static int
 channel_clear(void)
 {
+  bool busy, idle, stopped;
+
+  LOG_DBG("channel_clear()");
+
+  on();
+
+  /* We are now in RX. Send CCASTART */
+  nrf_radio_task_trigger(NRF_RADIO_TASK_CCASTART);
+
+  /*
+   * Wait 8 symbol periods - 128 usec. Conveniently, 1 rtimer tick is 16us,
+   * exactly equal to the duration of a symbol
+   */
+  RTIMER_BUSYWAIT(8 * SYMBOL_DURATION_RTIMER);
+
+  busy = nrf_radio_event_check(NRF_RADIO_EVENT_CCABUSY);
+  idle = nrf_radio_event_check(NRF_RADIO_EVENT_CCAIDLE);
+  stopped = nrf_radio_event_check(NRF_RADIO_EVENT_CCASTOPPED);
+
+  LOG_DBG("I=%u, B=%u, S=%u\n", idle, busy, stopped);
+
+  if(busy) {
+    return NRF52840_CCA_BUSY;
+  }
+
   return NRF52840_CCA_CLEAR;
 }
 /*---------------------------------------------------------------------------*/
