@@ -704,6 +704,7 @@ get_value(radio_param_t param, radio_value_t *value)
     *value = (radio_value_t)get_channel();
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
+    *value = 0;
     if(poll_mode) {
       *value |= RADIO_RX_MODE_POLL_MODE;
     }
