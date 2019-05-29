@@ -61,8 +61,6 @@
 #define ACK_MPDU_MIN_LEN      5
 #define ACK_PAYLOAD_MIN_LEN  (ACK_MPDU_MIN_LEN - FCS_LEN)
 /*---------------------------------------------------------------------------*/
-static volatile bool poll_mode = false;
-
 /*
  * The last frame's RSSI and LQI
  *
@@ -75,9 +73,6 @@ static volatile bool poll_mode = false;
  */
 static int8_t last_rssi;
 static uint8_t last_lqi;
-
-/* Perform CCA before TX */
-static uint8_t send_on_cca = RADIO_TX_MODE_SEND_ON_CCA;
 /*---------------------------------------------------------------------------*/
 PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 /*---------------------------------------------------------------------------*/
@@ -138,14 +133,22 @@ typedef struct rx_buf_s {
 
 static rx_buf_t rx_buf;
 /*---------------------------------------------------------------------------*/
-typedef struct cca_cfg_s {
+typedef struct rf_cfg_s {
+  bool poll_mode;
+  nrf_radio_txpower_t txpower;
+  uint8_t channel;
+  uint8_t send_on_cca; /* Perform CCA before TX */
   uint8_t cca_mode;
   uint8_t cca_corr_threshold;
   uint8_t cca_corr_count;
   uint8_t ed_threshold;
-} cca_cfg_t;
+} rf_cfg_t;
 
-static cca_cfg_t cca_config = {
+static volatile rf_cfg_t rf_config = {
+  .poll_mode = false,
+  .txpower = NRF_RADIO_TXPOWER_0DBM,
+  .send_on_cca = RADIO_TX_MODE_SEND_ON_CCA,
+  .channel = IEEE802154_DEFAULT_CHANNEL,
   .cca_mode = NRF52840_CCA_MODE,
   .cca_corr_threshold = NRF52840_CCA_CORR_THRESHOLD,
   .cca_corr_count = NRF52840_CCA_CORR_COUNT,
@@ -176,6 +179,7 @@ get_channel(void)
 static void
 set_channel(uint8_t channel)
 {
+  rf_config.channel = channel;
   NRF_RADIO->FREQUENCY = 5 * (channel - 10);
 }
 /*---------------------------------------------------------------------------*/
@@ -184,10 +188,10 @@ cca_reconfigure(void)
 {
   uint32_t ccactrl;
 
-  ccactrl = cca_config.cca_mode;
-  ccactrl |= cca_config.ed_threshold << RADIO_CCACTRL_CCAEDTHRES_Pos;
-  ccactrl |= cca_config.cca_corr_count << RADIO_CCACTRL_CCACORRCNT_Pos;
-  ccactrl |= cca_config.cca_corr_threshold << RADIO_CCACTRL_CCACORRTHRES_Pos;
+  ccactrl = rf_config.cca_mode;
+  ccactrl |= rf_config.ed_threshold << RADIO_CCACTRL_CCAEDTHRES_Pos;
+  ccactrl |= rf_config.cca_corr_count << RADIO_CCACTRL_CCACORRCNT_Pos;
+  ccactrl |= rf_config.cca_corr_threshold << RADIO_CCACTRL_CCACORRTHRES_Pos;
 
   NRF_RADIO->CCACTRL = ccactrl;
 }
@@ -234,7 +238,7 @@ setup_interrupts(void)
 
   stat = critical_enter();
 
-  if(!poll_mode) {
+  if(!rf_config.poll_mode) {
     nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
     interrupts |= NRF_RADIO_INT_CRCOK_MASK;
   }
@@ -273,7 +277,7 @@ setup_ppi_timestamping(void)
 static void
 set_poll_mode(bool enable)
 {
-  poll_mode = enable;
+  rf_config.poll_mode = enable;
   setup_interrupts();
 }
 /*---------------------------------------------------------------------------*/
@@ -302,7 +306,7 @@ configure(void)
 {
   nrf_radio_mode_set(NRF_RADIO_MODE_IEEE802154_250KBIT);
 
-  set_channel(IEEE802154_DEFAULT_CHANNEL);
+  set_channel(rf_config.channel);
 
   cca_reconfigure();
 
@@ -484,7 +488,7 @@ init(void)
   power_on_and_configure();
 
   /* Set up initial state of poll mode. This will configure interrupts. */
-  set_poll_mode(poll_mode);
+  set_poll_mode(rf_config.poll_mode);
 
   return RADIO_TX_OK;
 }
@@ -522,12 +526,14 @@ transmit(unsigned short transmit_len)
 
   on();
 
-  if(send_on_cca) {
+  if(rf_config.send_on_cca) {
     if(channel_clear() == NRF52840_CCA_BUSY) {
       LOG_DBG("TX: Busy\n");
       return RADIO_TX_COLLISION;
     }
   }
+
+  nrf_radio_txpower_set(rf_config.txpower);
 
   /* When we reach here we are in state RX. Send a STOP to drop to RXIDLE */
   nrf_radio_task_trigger(NRF_RADIO_TASK_STOP);
@@ -711,21 +717,21 @@ get_value(radio_param_t param, radio_value_t *value)
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
     *value = 0;
-    if(poll_mode) {
+    if(rf_config.poll_mode) {
       *value |= RADIO_RX_MODE_POLL_MODE;
     }
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TX_MODE:
     *value = 0;
-    if(send_on_cca) {
+    if(rf_config.send_on_cca) {
       *value |= RADIO_TX_MODE_SEND_ON_CCA;
     }
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TXPOWER:
-    *value = (radio_value_t)nrf_radio_txpower_get();
+    *value = (radio_value_t)rf_config.txpower;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
-    *value = (radio_value_t)cca_config.cca_corr_threshold;
+    *value = (radio_value_t)rf_config.cca_corr_threshold;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RSSI:
     *value = (radio_value_t)rssi_read();
@@ -809,13 +815,14 @@ set_value(radio_param_t param, radio_value_t value)
       return RADIO_RESULT_INVALID_VALUE;
     }
 
-    send_on_cca = (value & RADIO_TX_MODE_SEND_ON_CCA) != 0;
+    rf_config.send_on_cca = (value & RADIO_TX_MODE_SEND_ON_CCA) != 0;
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TXPOWER:
+    rf_config.txpower = value;
     nrf_radio_txpower_set(value);
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
-    cca_config.cca_corr_threshold = value;
+    rf_config.cca_corr_threshold = value;
     cca_reconfigure();
     return RADIO_RESULT_OK;
 
@@ -912,7 +919,7 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 void
 RADIO_IRQHandler(void)
 {
-  if(!poll_mode) {
+  if(!rf_config.poll_mode) {
     if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK)) {
       nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
       process_poll(&nrf52840_ieee_rf_process);
