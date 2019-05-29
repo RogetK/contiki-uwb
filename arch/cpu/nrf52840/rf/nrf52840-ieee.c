@@ -327,8 +327,7 @@ enter_rx(void)
   rx_events_clear();
   setup_interrupts();
 
-  if((curr_state != NRF_RADIO_STATE_RXIDLE) &&
-     (curr_state != NRF_RADIO_STATE_TXIDLE)) {
+  if(curr_state != NRF_RADIO_STATE_RXIDLE) {
     /* Clear EVENTS_RXREADY and trigger RXEN */
     nrf_radio_event_clear(NRF_RADIO_EVENT_RXREADY);
     nrf_radio_task_trigger(NRF_RADIO_TASK_RXEN);
