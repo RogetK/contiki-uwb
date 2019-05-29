@@ -874,12 +874,14 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 
     LOG_DBG("Polled\n");
 
-    watchdog_periodic();
-    packetbuf_clear();
-    len = read_frame(packetbuf_dataptr(), PACKETBUF_SIZE);
-    if(len > 0) {
-      packetbuf_set_datalen(len);
-      NETSTACK_MAC.input();
+    if(pending_packet()) {
+      watchdog_periodic();
+      packetbuf_clear();
+      len = read_frame(packetbuf_dataptr(), PACKETBUF_SIZE);
+      if(len > 0) {
+        packetbuf_set_datalen(len);
+        NETSTACK_MAC.input();
+      }
     }
   }
 
