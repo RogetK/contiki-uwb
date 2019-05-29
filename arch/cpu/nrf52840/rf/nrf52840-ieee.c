@@ -17,7 +17,16 @@
 #include <stdbool.h>
 #include <string.h>
 /*---------------------------------------------------------------------------*/
-/* Log configuration */
+/*
+ * Log configuration
+ *
+ * NB: LOG_LEVEL_DBG should only be used to validate radio driver operation.
+ *
+ * Setting LOG_LEVEL to LOG_LEVEL_DBG will mess-up all MAC-layer ACK-related
+ * timings, including the time we spend waiting for an ACK and the time it
+ * takes us to transmit one. Expect all unicast communications to become
+ * erratic or to break altogether.
+ */
 #include "sys/log.h"
 
 #define LOG_MODULE "nRF52840 IEEE"
@@ -471,7 +480,7 @@ init(void)
 static int
 prepare(const void *payload, unsigned short payload_len)
 {
-  LOG_INFO("Prepare %u bytes\n", payload_len);
+  LOG_DBG("Prepare %u bytes\n", payload_len);
 
   if(payload_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("Too long: %u bytes, max %u\n", payload_len, MAX_PAYLOAD_LEN);
@@ -492,7 +501,7 @@ transmit(unsigned short transmit_len)
 {
   int i;
 
-  LOG_INFO("TX %u bytes + FCS, channel=%u\n", transmit_len, get_channel());
+  LOG_DBG("TX %u bytes + FCS, channel=%u\n", transmit_len, get_channel());
 
   if(transmit_len > MAX_PAYLOAD_LEN) {
     LOG_ERR("TX: too long (%u bytes)\n", transmit_len);
@@ -599,7 +608,7 @@ read_frame(void *buf, unsigned short bufsize)
   LOG_DBG("Read frame, len=%d bytes (%u symbols):", rx_buf.phr, 2 * rx_buf.phr);
   LOG_DBG_("CRCOK - FRAMESTART = %lu-%lu=%lu symbols\n", ts_dbg_crcok,
            ts_dbg_framestart, diff);
-  LOG_INFO("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
+  LOG_DBG("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
            last_lqi);
 
   /*
