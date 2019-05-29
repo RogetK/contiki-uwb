@@ -152,6 +152,15 @@ static cca_cfg_t cca_config = {
 };
 /*---------------------------------------------------------------------------*/
 static bool
+phr_is_valid(uint8_t phr)
+{
+  if(phr < ACK_MPDU_MIN_LEN || phr > MPDU_LEN) {
+    return false;
+  }
+  return true;
+}
+/*---------------------------------------------------------------------------*/
+static bool
 radio_is_powered(void)
 {
   return NRF_RADIO->POWER == 0 ? false : true;
