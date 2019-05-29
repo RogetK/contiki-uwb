@@ -1,125 +1,68 @@
-/*
- * Copyright (c) 2015, Nordic Semiconductor
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- */
-/**
- * \addtogroup nrf52832-dev Device drivers
- * @{
- *
- * \addtogroup nrf52832-uart UART driver
- * @{
- *
- * \file
- *         Contiki compatible UART driver.
- * \author
- *         Wojciech Bober <wojciech.bober@nordicsemi.no>
- */
-#include <stdlib.h>
-#include "nrf.h"
-#include "sdk_config.h"
-#include "nrfx_uart.h"
-#include "app_util_platform.h"
-#include "app_error.h"
-
 #include "contiki.h"
+#include "nrf.h"
+#include "nrf_uart.h"
+#include "nrf_gpio.h"
 #include "dev/uart0.h"
-#include "dev/watchdog.h"
-#include "lib/ringbuf.h"
 
-#define TXBUFSIZE 128
-static uint8_t rx_buffer[1];
-
-static int (*uart0_input_handler)(unsigned char c);
-
-static struct ringbuf txbuf;
-static uint8_t txbuf_data[TXBUFSIZE];
-
-static nrfx_uart_t uart_inst = NRFX_UART_INSTANCE(0);
-
+#include <stdlib.h>
+#include <stdint.h>
 /*---------------------------------------------------------------------------*/
-static void
-uart_event_handler(const nrfx_uart_event_t * p_event, void * p_context)
-{
-  if(p_event->type == NRFX_UART_EVT_RX_DONE) {
-    if(uart0_input_handler != NULL) {
-      uart0_input_handler(p_event->data.rxtx.p_data[0]);
-    }
-    (void)nrfx_uart_rx(&uart_inst, rx_buffer, 1);
-  } else if(p_event->type == NRFX_UART_EVT_TX_DONE) {
-    if(ringbuf_elements(&txbuf) > 0) {
-      uint8_t c = ringbuf_get(&txbuf);
-      nrfx_uart_tx(&uart_inst, &c, 1);
-    }
-  }
-}
+static int (*input_handler)(unsigned char c);
+
+#define UART_INSTANCE NRF_UART0
+/*---------------------------------------------------------------------------*/
+#define TX_PIN  6
+#define RX_PIN  8
 /*---------------------------------------------------------------------------*/
 void
 uart0_set_input(int (*input)(unsigned char c))
 {
-  uart0_input_handler = input;
+  input_handler = input;
 
   if(input != NULL) {
-    nrfx_uart_rx_enable(&uart_inst);
-    nrfx_uart_rx(&uart_inst, rx_buffer, 1);
+    nrf_uart_int_enable(UART_INSTANCE, NRF_UART_INT_MASK_RXDRDY);
+    NVIC_ClearPendingIRQ(UARTE0_UART0_IRQn);
+    NVIC_EnableIRQ(UARTE0_UART0_IRQn);
+    nrf_uart_task_trigger(UART_INSTANCE, NRF_UART_TASK_STARTRX);
+  } else {
+    nrf_uart_int_disable(UART_INSTANCE, NRF_UART_INT_MASK_RXDRDY);
+    NVIC_ClearPendingIRQ(UARTE0_UART0_IRQn);
+    NVIC_DisableIRQ(UARTE0_UART0_IRQn);
+    nrf_uart_task_trigger(UART_INSTANCE, NRF_UART_TASK_STOPRX);
   }
 }
 /*---------------------------------------------------------------------------*/
 void
 uart0_writeb(unsigned char c)
 {
-  if(nrfx_uart_tx(&uart_inst, &c, 1) == NRF_ERROR_BUSY) {
-    while(ringbuf_put(&txbuf, c) == 0) {
-      __WFE();
-    }
-  }
+  nrf_uart_txd_set(UART_INSTANCE, c);
+
+  /* Block if previous TX is ongoing */
+  while(nrf_uart_event_check(UART_INSTANCE, NRF_UART_EVENT_TXDRDY) == false);
+  nrf_uart_event_clear(UART_INSTANCE, NRF_UART_EVENT_TXDRDY);
 }
 /*---------------------------------------------------------------------------*/
-/**
- * Initialize the RS232 port.
- *
- */
 void
 uart0_init(unsigned long ubr)
 {
-  nrfx_uart_config_t config = NRFX_UART_DEFAULT_CONFIG;
-  config.pseltxd = 6;
-  config.pselrxd = 8;
-  config.pselcts = 7;
-  config.pselrts = 5;
-  ret_code_t retcode = nrfx_uart_init(&uart_inst, &config, uart_event_handler);
-  APP_ERROR_CHECK(retcode);
-  if(retcode != NRFX_SUCCESS) {
-    perror("nrfx_uart_init()");
-  }
+  nrf_uart_disable(UART_INSTANCE);
+  nrf_gpio_cfg_output(TX_PIN);
+  nrf_gpio_pin_set(TX_PIN);
+  nrf_gpio_cfg_input(RX_PIN, NRF_GPIO_PIN_NOPULL);
 
-  ringbuf_init(&txbuf, txbuf_data, sizeof(txbuf_data));
+  nrf_uart_baudrate_set(UART_INSTANCE, NRF_UART_BAUDRATE_115200);
+  nrf_uart_configure(UART_INSTANCE, NRF_UART_PARITY_EXCLUDED,
+                     NRF_UART_HWFC_DISABLED);
+  nrf_uart_txrx_pins_set(UART_INSTANCE, TX_PIN, RX_PIN);
+  nrf_uart_event_clear(UART_INSTANCE, NRF_UART_EVENT_TXDRDY);
+  nrf_uart_enable(UART_INSTANCE);
+  nrf_uart_task_trigger(UART_INSTANCE, NRF_UART_TASK_STARTTX);
 }
-/**
- * @}
- * @}
- */
+/*---------------------------------------------------------------------------*/
+void
+UARTE0_UART0_IRQHandler(void)
+{
+  nrf_uart_event_clear(UART_INSTANCE, NRF_UART_EVENT_RXDRDY);
+  input_handler(nrf_uart_rxd_get(UART_INSTANCE));
+}
+/*---------------------------------------------------------------------------*/
