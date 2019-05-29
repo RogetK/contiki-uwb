@@ -542,9 +542,12 @@ transmit(unsigned short transmit_len)
 
   LOG_DBG("TX: Done\n");
 
-  /* Disable TX, enter RX */
-  nrf_radio_task_trigger(NRF_RADIO_TASK_DISABLE);
-
+  /*
+   * Enter RX.
+   * TX has finished and we are in state TXIDLE. enter_rx will handle the
+   * transition from any state to RX, so we don't need to do anything further
+   * here.
+   */
   enter_rx();
 
   return RADIO_TX_OK;
