@@ -629,12 +629,20 @@ receiving_packet(void)
   LOG_DBG("Receiving: ");
 
   /*
-   * Start of reception generates the FRAMESTART event. End of reception
-   * generates the END event. If FRAMESTART is generated and END is not then
-   * we are in the process of receiving.
+   * First check if we have received a PHR. When we enter RX the value of the
+   * PHR in our RX buffer is zero so we can return early.
    */
-  if((nrf_radio_event_check(NRF_RADIO_EVENT_FRAMESTART) == true) &&
-     (nrf_radio_event_check(NRF_RADIO_EVENT_END) == false)) {
+  if(phr_is_valid(rx_buf.phr) == false) {
+    LOG_DBG_("No\n");
+    return NRF52840_RECEIVING_NO;
+  }
+
+  /*
+   * We have received a valid PHR. Either we are in the process of receiving
+   * a frame, or we have fully received one. Check the radio state to
+   * determine which.
+   */
+  if(nrf_radio_state_get() == NRF_RADIO_STATE_RX) {
     LOG_DBG_("Yes\n");
     return NRF52840_RECEIVING_YES;
   }
