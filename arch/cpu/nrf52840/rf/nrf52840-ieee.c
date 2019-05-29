@@ -239,10 +239,16 @@ setup_interrupts(void)
     interrupts |= NRF_RADIO_INT_CRCOK_MASK;
   }
 
+  /* Make sure all interrupts are disabled before we enable selectively */
+  nrf_radio_int_disable(0xFFFFFFFF);
+  NVIC_ClearPendingIRQ(RADIO_IRQn);
+
   if(interrupts) {
-    NVIC_ClearPendingIRQ(RADIO_IRQn);
     nrf_radio_int_enable(interrupts);
     NVIC_EnableIRQ(RADIO_IRQn);
+  } else {
+    /* No radio interrupts required. Make sure they are all off at the NVIC */
+    NVIC_DisableIRQ(RADIO_IRQn);
   }
 
   critical_exit(stat);
