@@ -103,6 +103,7 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define SYMBOL_DURATION_USEC          16
 #define SYMBOL_DURATION_RTIMER         1
 #define BYTE_DURATION_RTIMER          (SYMBOL_DURATION_RTIMER * 2)
+#define TXRU_DURATION_TIMER            3
 /*---------------------------------------------------------------------------*/
 /* Timestamping control */
 #if MAC_CONF_WITH_TSCH
@@ -508,9 +509,6 @@ transmit(unsigned short transmit_len)
   }
   LOG_DBG_("\n");
 
-  /* Start the transmission */
-  ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
-
   LOG_DBG("TX Start. State %u", nrf_radio_state_get());
 
   /* Pointer to the TX buffer in PACKETPTR before task START */
@@ -521,24 +519,24 @@ transmit(unsigned short transmit_len)
   nrf_radio_event_clear(NRF_RADIO_EVENT_PHYEND);
   nrf_radio_event_clear(NRF_RADIO_EVENT_TXREADY);
 
+  /* Start the transmission */
+  ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
+
+  /* Enable the SHORT between TXREADY and START before triggering TXRU */
+  nrf_radio_shorts_enable(NRF_RADIO_SHORT_TXREADY_START_MASK);
   nrf_radio_task_trigger(NRF_RADIO_TASK_TXEN);
 
-  LOG_DBG_("--->%u", nrf_radio_state_get());
-
-  /* Wait for the rest of the TXRU, if needed */
-  while(nrf_radio_state_get() != NRF_RADIO_STATE_TXIDLE);
-
-  LOG_DBG_("--->%u", nrf_radio_state_get());
-
-  /* Trigger the Start task */
-  nrf_radio_task_trigger(NRF_RADIO_TASK_START);
+  /*
+   * With fast rampup, the transition between TX and READY (TXRU duration)
+   * takes 40us. This means we will be in TX mode in less than 3 rtimer ticks
+   * (3x16=42 us). After this duration, we can busy wait for TX to finish.
+   */
+  RTIMER_BUSYWAIT(TXRU_DURATION_TIMER);
 
   LOG_DBG_("--->%u\n", nrf_radio_state_get());
 
   /* Wait for TX to complete */
   while(nrf_radio_state_get() == NRF_RADIO_STATE_TX);
-
-  ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
 
   LOG_DBG("TX: Done\n");
 
@@ -549,6 +547,9 @@ transmit(unsigned short transmit_len)
    * here.
    */
   enter_rx();
+
+  /* We are now in RX */
+  ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
 
   return RADIO_TX_OK;
 }
