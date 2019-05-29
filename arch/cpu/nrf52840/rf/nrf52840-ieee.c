@@ -498,6 +498,10 @@ transmit(unsigned short transmit_len)
     }
   }
 
+  /* When we reach here we are in state RX. Send a STOP to drop to RXIDLE */
+  nrf_radio_task_trigger(NRF_RADIO_TASK_STOP);
+  while(nrf_radio_state_get() != NRF_RADIO_STATE_RXIDLE);
+
   LOG_DBG("Transmit: %u bytes=000000", tx_buf.phr);
   for(i = 0; i < tx_buf.phr - 2; i++) {
     LOG_DBG_(" %02x", tx_buf.mpdu[i]);
