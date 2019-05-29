@@ -311,12 +311,12 @@ enter_rx(void)
 {
   nrf_radio_state_t curr_state = nrf_radio_state_get();
 
-  LOG_INFO("Enter RX, state=%u", curr_state);
+  LOG_DBG("Enter RX, state=%u", curr_state);
 
   /* Do nothing if we are already in RX */
   if(curr_state == NRF_RADIO_STATE_RX) {
     LOG_DBG_(". Was in RX");
-    LOG_INFO_("\n");
+    LOG_DBG_("\n");
     return;
   }
 
@@ -335,13 +335,13 @@ enter_rx(void)
 
     /* Block till RXRU is done */
     while(!nrf_radio_event_check(NRF_RADIO_EVENT_RXREADY));
-    LOG_INFO_("--->%u", nrf_radio_state_get());
+    LOG_DBG_("--->%u", nrf_radio_state_get());
   }
 
   /* Trigger the Start task */
   nrf_radio_task_trigger(NRF_RADIO_TASK_START);
 
-  LOG_INFO_("--->%u\n", nrf_radio_state_get());
+  LOG_DBG_("--->%u\n", nrf_radio_state_get());
 
   LOG_DBG("PACKETPTR=0x%08lx (rx_buf @ 0x%08lx)\n",
           (uint32_t)nrf_radio_packetptr_get(), (uint32_t)&rx_buf);
