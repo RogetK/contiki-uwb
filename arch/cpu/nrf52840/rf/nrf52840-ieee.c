@@ -114,23 +114,15 @@ PROCESS(nrf52840_ieee_rf_process, "nRF52840 IEEE RF driver");
 #define BYTE_DURATION_RTIMER          (SYMBOL_DURATION_RTIMER * 2)
 #define TXRU_DURATION_TIMER            3
 /*---------------------------------------------------------------------------*/
-/* Timestamping control */
-#if MAC_CONF_WITH_TSCH
-#define TIMESTAMPING_WITH_PPI 1
-#endif
+typedef struct timestamps_s {
+  rtimer_clock_t sfd;           /* Derived: 1 byte = 2 rtimer ticks before FRAMESTART */
+  rtimer_clock_t framestart;    /* PPI Channel 0 */
+  rtimer_clock_t end;           /* PPI pre-programmed Channel 27 */
+  rtimer_clock_t mpdu_duration; /* Calculated: PHR * 2 rtimer ticks */
+  uint8_t phr;                  /* PHR: The MPDU length in bytes */
+} timestamps_t;
 
-/* Timestamp in rtimer ticks of the reception of the PHR (FRAMESTART) */
-static volatile rtimer_clock_t ts_dbg_framestart;
-
-/* Timestamp in rtimer ticks of the CRCOK event */
-static volatile rtimer_clock_t ts_dbg_crcok;
-
-/*
- * Timestamp in rtimer ticks of the reception of the SFD
- * The SFD was received 1 byte before FRAMESTART, therefore all we need to do
- * is subtract 2 symbols (2 rtimer ticks) from ts_dbg_framestart.
- */
-static volatile rtimer_clock_t ts_last_frame;
+static volatile timestamps_t timestamps;
 /*---------------------------------------------------------------------------*/
 typedef struct tx_buf_s {
   uint8_t phr;
@@ -244,8 +236,7 @@ setup_interrupts(void)
 
   if(!poll_mode) {
     nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
-    nrf_radio_event_clear(NRF_RADIO_EVENT_FRAMESTART);
-    interrupts |= NRF_RADIO_INT_CRCOK_MASK | NRF_RADIO_INT_FRAMESTART_MASK;
+    interrupts |= NRF_RADIO_INT_CRCOK_MASK;
   }
 
   if(interrupts) {
@@ -255,6 +246,22 @@ setup_interrupts(void)
   }
 
   critical_exit(stat);
+}
+/*---------------------------------------------------------------------------*/
+/*
+ * Set up timestamping with PPI:
+ * - Enable the pre-programmed Channel 27: RADIO->END--->TIMER0->CAPTURE[2]
+ * - Programme Channel 0 for RADIO->FRAMESTART--->TIMER0->CAPTURE[3]
+ */
+static void
+setup_ppi_timestamping(void)
+{
+  nrf_ppi_channel_endpoint_setup(
+    NRF_PPI_CHANNEL0,
+    (uint32_t)nrf_radio_event_address_get(NRF_RADIO_EVENT_FRAMESTART),
+    (uint32_t)nrf_timer_task_address_get(NRF_TIMER0, NRF_TIMER_TASK_CAPTURE3));
+  nrf_ppi_channel_enable(NRF_PPI_CHANNEL0);
+  nrf_ppi_channel_enable(NRF_PPI_CHANNEL27);
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -342,6 +349,9 @@ enter_rx(void)
   rx_buf_clear();
   nrf_radio_packetptr_set(&rx_buf);
 
+  /* Initiate PPI timestamping */
+  setup_ppi_timestamping();
+
   /* Make sure the correct interrupts are enabled */
   rx_events_clear();
   setup_interrupts();
@@ -403,13 +413,6 @@ on(void)
     power_on_and_configure();
   }
 
-#if TIMESTAMPING_WITH_PPI
-  nrf_timer_mode_set(NRF_TIMER0, NRF_TIMER_MODE_COUNTER);
-  nrf_timer_task_trigger(NRF_TIMER0, NRF_TIMER_TASK_START);
-
-  nrf_ppi_channel_enable(NRF_PPI_CHANNEL20);
-#endif
-
   enter_rx();
 
   ENERGEST_ON(ENERGEST_TYPE_LISTEN);
@@ -457,9 +460,12 @@ init(void)
 
   last_rssi = 0;
   last_lqi = 0;
-  ts_dbg_framestart = 0;
-  ts_dbg_crcok = 0;
-  ts_last_frame = 0;
+
+  timestamps.sfd = 0;
+  timestamps.framestart = 0;
+  timestamps.end = 0;
+  timestamps.mpdu_duration = 0;
+  timestamps.phr = 0;
 
   /* Request the HF clock */
   nrf_clock_event_clear(NRF_CLOCK_EVENT_HFCLKSTARTED);
@@ -583,7 +589,6 @@ static int
 read_frame(void *buf, unsigned short bufsize)
 {
   int payload_len;
-  rtimer_clock_t diff;
 
   /* Clear all events */
   rx_events_clear();
@@ -603,20 +608,21 @@ read_frame(void *buf, unsigned short bufsize)
   packetbuf_set_attr(PACKETBUF_ATTR_RSSI, last_rssi);
   packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, last_lqi);
 
-  diff = ts_dbg_crcok - ts_dbg_framestart;
-
-  LOG_DBG("Read frame, len=%d bytes (%u symbols):", rx_buf.phr, 2 * rx_buf.phr);
-  LOG_DBG_("CRCOK - FRAMESTART = %lu-%lu=%lu symbols\n", ts_dbg_crcok,
-           ts_dbg_framestart, diff);
-  LOG_DBG("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
-           last_lqi);
+  /* Latch timestamp values for this most recently received frame */
+  timestamps.phr = rx_buf.phr;
+  timestamps.framestart = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL3);
+  timestamps.end = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL2);
+  timestamps.mpdu_duration = rx_buf.phr * BYTE_DURATION_RTIMER;
 
   /*
    * Timestamp in rtimer ticks of the reception of the SFD. The SFD was
-   * received 1 byte before the PHR (FRAMESTART event), therefore all we need
-   * to do is subtract 2 symbols (2 rtimer ticks) from ts_dbg_framestart.
+   * received 1 byte before the PHR, therefore all we need to do is subtract
+   * 2 symbols (2 rtimer ticks) from the PPI FRAMESTART timestamp.
    */
-  ts_last_frame = ts_dbg_framestart - BYTE_DURATION_RTIMER;
+  timestamps.sfd = timestamps.framestart - BYTE_DURATION_RTIMER;
+
+  LOG_DBG("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
+           last_lqi);
 
   enter_rx();
 
@@ -821,7 +827,7 @@ get_object(radio_param_t param, void *dest, size_t size)
     if(size != sizeof(rtimer_clock_t) || !dest) {
       return RADIO_RESULT_INVALID_VALUE;
     }
-    *(rtimer_clock_t *)dest = ts_last_frame;
+    *(rtimer_clock_t *)dest = timestamps.sfd;
     return RADIO_RESULT_OK;
   }
 
@@ -881,6 +887,14 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
       if(len > 0) {
         packetbuf_set_datalen(len);
         NETSTACK_MAC.input();
+        LOG_DBG("last frame (%u bytes) timestamps:\n", timestamps.phr);
+        LOG_DBG("      SFD=%lu (Derived)\n", timestamps.sfd);
+        LOG_DBG("      PHY=%lu (PPI)\n", timestamps.framestart);
+        LOG_DBG("     MPDU=%lu (Duration)\n", timestamps.mpdu_duration);
+        LOG_DBG("      END=%lu (PPI)\n", timestamps.end);
+        LOG_DBG(" Expected=%lu + %u + %lu = %lu\n", timestamps.sfd,
+                BYTE_DURATION_RTIMER, timestamps.mpdu_duration,
+                timestamps.sfd + BYTE_DURATION_RTIMER + timestamps.mpdu_duration);
       }
     }
   }
@@ -893,16 +907,8 @@ RADIO_IRQHandler(void)
 {
   if(!poll_mode) {
     if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK)) {
-      ts_dbg_crcok = RTIMER_NOW();
       nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
-      nrf_radio_event_clear(NRF_RADIO_EVENT_FRAMESTART);
       process_poll(&nrf52840_ieee_rf_process);
-    }
-
-    if(nrf_radio_event_check(NRF_RADIO_EVENT_FRAMESTART)) {
-      /* Unack the interrupt */
-      ts_dbg_framestart = RTIMER_NOW();
-      nrf_radio_int_disable(NRF_RADIO_INT_FRAMESTART_MASK);
     }
   }
 }
