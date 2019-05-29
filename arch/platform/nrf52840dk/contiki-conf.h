@@ -74,7 +74,10 @@
 #define UIP_CONF_ND6_SEND_NS                 1
 
 #endif /* NETSTACK_CONF_WITH_IPV6 */
-
+/*---------------------------------------------------------------------------*/
+/* Include CPU-related configuration */
+#include "nrf52840-conf.h"
+/*---------------------------------------------------------------------------*/
 /** @} */
 #endif /* CONTIKI_CONF_H */
 /**
