@@ -646,10 +646,20 @@ receiving_packet(void)
 static int
 pending_packet(void)
 {
-  /* END generated, CRCOK generated, and there are bytes in the RX Buf */
-  if((rx_buf.phr > 0) &&
-     (nrf_radio_event_check(NRF_RADIO_EVENT_END) == true) &&
-     (nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK) == true)) {
+  /*
+   * First check if we have received a PHR. When we enter RX the value of the
+   * PHR in our RX buffer is zero so we can return early.
+   */
+  if(phr_is_valid(rx_buf.phr) == false) {
+    return NRF52840_PENDING_NO;
+  }
+
+  /*
+   * We have received a valid PHR. Either we are in the process of receiving
+   * a frame, or we have fully received one. Check the radio state to
+   * determine which.
+   */
+  if(nrf_radio_state_get() == NRF_RADIO_STATE_RXIDLE) {
     return NRF52840_PENDING_YES;
   }
 
