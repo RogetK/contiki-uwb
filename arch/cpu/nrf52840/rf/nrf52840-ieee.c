@@ -179,7 +179,6 @@ get_channel(void)
 static void
 set_channel(uint8_t channel)
 {
-  rf_config.channel = channel;
   NRF_RADIO->FREQUENCY = 5 * (channel - 10);
 }
 /*---------------------------------------------------------------------------*/
@@ -798,7 +797,12 @@ set_value(radio_param_t param, radio_value_t value)
        value > NRF52840_CHANNEL_MAX) {
       return RADIO_RESULT_INVALID_VALUE;
     }
-    set_channel(value);
+    rf_config.channel = value;
+
+    /* If we are powered on, apply immediately. */
+    if(radio_is_powered()) {
+      set_channel(value);
+    }
     return RADIO_RESULT_OK;
   case RADIO_PARAM_RX_MODE:
     if(value & ~(RADIO_RX_MODE_ADDRESS_FILTER |
@@ -819,11 +823,17 @@ set_value(radio_param_t param, radio_value_t value)
     return RADIO_RESULT_OK;
   case RADIO_PARAM_TXPOWER:
     rf_config.txpower = value;
-    nrf_radio_txpower_set(value);
+    /* If we are powered on, apply immediately. */
+    if(radio_is_powered()) {
+      nrf_radio_txpower_set(value);
+    }
     return RADIO_RESULT_OK;
   case RADIO_PARAM_CCA_THRESHOLD:
     rf_config.cca_corr_threshold = value;
-    cca_reconfigure();
+    /* If we are powered on, apply immediately. */
+    if(radio_is_powered()) {
+      cca_reconfigure();
+    }
     return RADIO_RESULT_OK;
 
   case RADIO_PARAM_SHR_SEARCH:
