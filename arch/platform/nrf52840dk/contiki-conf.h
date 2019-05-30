@@ -43,37 +43,9 @@
 #include "nrf52840dk-def.h"
 #include "nrf52840-def.h"
 /*---------------------------------------------------------------------------*/
-/**
- * \name Network Stack Configuration
- *
- * @{
- */
-/* 6LoWPAN */
-#define SICSLOWPAN_CONF_MAC_MAX_PAYLOAD         1280
-
 #ifndef SICSLOWPAN_CONF_FRAG
 #define SICSLOWPAN_CONF_FRAG                    1
 #endif
-
-/* Packet buffer */
-#define PACKETBUF_CONF_SIZE                     1280  /**< Required IPv6 MTU size */
-
-/** @} */
-
-/**
- * \name IPv6 network buffer configuration
- *
- * @{
- */
-
-#if NETSTACK_CONF_WITH_IPV6
-/*---------------------------------------------------------------------------*/
-
-/* ND and Routing */
-#define UIP_CONF_ROUTER                      0 /**< BLE master role, which allows for routing, isn't supported. */
-#define UIP_CONF_ND6_SEND_NS                 1
-
-#endif /* NETSTACK_CONF_WITH_IPV6 */
 /*---------------------------------------------------------------------------*/
 /* Include CPU-related configuration */
 #include "nrf52840-conf.h"
