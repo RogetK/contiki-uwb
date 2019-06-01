@@ -129,6 +129,7 @@ static tx_buf_t tx_buf;
 typedef struct rx_buf_s {
   uint8_t phr;
   uint8_t mpdu[MPDU_LEN];
+  bool full; /* Used in interrupt / non-poll mode for additional state */
 } rx_buf_t;
 
 static rx_buf_t rx_buf;
