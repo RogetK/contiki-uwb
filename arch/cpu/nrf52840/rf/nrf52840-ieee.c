@@ -686,10 +686,13 @@ pending_packet(void)
 
   /*
    * We have received a valid PHR. Either we are in the process of receiving
-   * a frame, or we have fully received one. Check the radio state to
-   * determine which.
+   * a frame, or we have fully received one. If we have received a frame then
+   * EVENTS_CRCOK should be asserted. In poll mode that's enough. In non-poll
+   * mode the interrupt handler will clear the event (else the interrupt would
+   * fire again), but we save the state in rx_buf.full.
    */
-  if(nrf_radio_state_get() == NRF_RADIO_STATE_RXIDLE) {
+  if((nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK) == true) ||
+     (rx_buf.full == true)) {
     return NRF52840_PENDING_YES;
   }
 
