@@ -655,8 +655,8 @@ receiving_packet(void)
     }
 
     /*
-     * If the PHR is valid, inspect EVENTS_CRCOK and _CRCERROR. If both of
-     * them are clear then reception is ongoing
+     * If the PHR is valid and we are actually on, inspect EVENTS_CRCOK and
+     * _CRCERROR. If both of them are clear then reception is ongoing
      */
     if((nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK) == false) &&
        (nrf_radio_event_check(NRF_RADIO_EVENT_CRCERROR) == false)) {
