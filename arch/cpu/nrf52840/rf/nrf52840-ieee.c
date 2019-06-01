@@ -357,14 +357,12 @@ enter_rx(void)
   }
 
   /* Prepare the RX buffer */
-  rx_buf_clear();
   nrf_radio_packetptr_set(&rx_buf);
 
   /* Initiate PPI timestamping */
   setup_ppi_timestamping();
 
   /* Make sure the correct interrupts are enabled */
-  rx_events_clear();
   setup_interrupts();
 
   if(curr_state != NRF_RADIO_STATE_RXIDLE) {
@@ -484,6 +482,9 @@ init(void)
 
   /* Start the RF driver process */
   process_start(&nrf52840_ieee_rf_process, NULL);
+
+  /* Prepare the RX buffer */
+  rx_buf_clear();
 
   /* Power on the radio */
   power_on_and_configure();
@@ -610,6 +611,7 @@ read_frame(void *buf, unsigned short bufsize)
 
   if(phr_is_valid(rx_buf.phr) == false) {
     LOG_ERR("Incorrect length: %d\n", payload_len);
+    rx_buf_clear();
     enter_rx();
     return 0;
   }
@@ -637,6 +639,7 @@ read_frame(void *buf, unsigned short bufsize)
   LOG_DBG("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
            last_lqi);
 
+  rx_buf_clear();
   enter_rx();
 
   return payload_len;
