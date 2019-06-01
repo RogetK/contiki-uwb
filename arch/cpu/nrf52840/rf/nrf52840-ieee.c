@@ -648,6 +648,16 @@ read_frame(void *buf, unsigned short bufsize)
 static int
 receiving_packet(void)
 {
+  /* If we are powered off, we are not receiving */
+  if(radio_is_powered() == false) {
+    return NRF52840_RECEIVING_NO;
+  }
+
+  /* If our state is not RX, we are not receiving */
+  if(nrf_radio_state_get() != NRF_RADIO_STATE_RX) {
+    return NRF52840_RECEIVING_NO;
+  }
+
   if(rf_config.poll_mode) {
     /* In poll mode, if the PHR is invalid we can return early */
     if(phr_is_valid(rx_buf.phr) == false) {
