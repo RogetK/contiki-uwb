@@ -645,28 +645,31 @@ read_frame(void *buf, unsigned short bufsize)
 static int
 receiving_packet(void)
 {
-  LOG_DBG("Receiving: ");
+  if(rf_config.poll_mode) {
+    /* In poll mode, if the PHR is invalid we can return early */
+    if(phr_is_valid(rx_buf.phr) == false) {
+      return NRF52840_RECEIVING_NO;
+    }
 
-  /*
-   * First check if we have received a PHR. When we enter RX the value of the
-   * PHR in our RX buffer is zero so we can return early.
-   */
-  if(phr_is_valid(rx_buf.phr) == false) {
-    LOG_DBG_("No\n");
+    /*
+     * If the PHR is valid, inspect EVENTS_CRCOK and _CRCERROR. If both of
+     * them are clear then reception is ongoing
+     */
+    if((nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK) == false) &&
+       (nrf_radio_event_check(NRF_RADIO_EVENT_CRCERROR) == false)) {
+      return NRF52840_RECEIVING_YES;
+    }
+
     return NRF52840_RECEIVING_NO;
   }
 
   /*
-   * We have received a valid PHR. Either we are in the process of receiving
-   * a frame, or we have fully received one. Check the radio state to
-   * determine which.
+   * In non-poll mode, we are receiving if the PHR is valid but the buffer
+   * does not contain a full packet.
    */
-  if(nrf_radio_state_get() == NRF_RADIO_STATE_RX) {
-    LOG_DBG_("Yes\n");
+  if(phr_is_valid(rx_buf.phr) == true && rx_buf.full == false) {
     return NRF52840_RECEIVING_YES;
   }
-
-  LOG_DBG_("No\n");
   return NRF52840_RECEIVING_NO;
 }
 /*---------------------------------------------------------------------------*/
