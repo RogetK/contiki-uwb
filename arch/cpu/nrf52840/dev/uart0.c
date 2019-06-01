@@ -50,7 +50,7 @@ uart0_init(unsigned long ubr)
   nrf_gpio_pin_set(TX_PIN);
   nrf_gpio_cfg_input(RX_PIN, NRF_GPIO_PIN_NOPULL);
 
-  nrf_uart_baudrate_set(UART_INSTANCE, NRF_UART_BAUDRATE_115200);
+  nrf_uart_baudrate_set(UART_INSTANCE, NRF_UART_BAUDRATE_460800);
   nrf_uart_configure(UART_INSTANCE, NRF_UART_PARITY_EXCLUDED,
                      NRF_UART_HWFC_DISABLED);
   nrf_uart_txrx_pins_set(UART_INSTANCE, TX_PIN, RX_PIN);

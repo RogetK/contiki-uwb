@@ -129,6 +129,7 @@ static tx_buf_t tx_buf;
 typedef struct rx_buf_s {
   uint8_t phr;
   uint8_t mpdu[MPDU_LEN];
+  bool full; /* Used in interrupt / non-poll mode for additional state */
 } rx_buf_t;
 
 static rx_buf_t rx_buf;
@@ -239,7 +240,8 @@ setup_interrupts(void)
 
   if(!rf_config.poll_mode) {
     nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
-    interrupts |= NRF_RADIO_INT_CRCOK_MASK;
+    nrf_radio_event_clear(NRF_RADIO_EVENT_CRCERROR);
+    interrupts |= NRF_RADIO_INT_CRCOK_MASK | NRF_RADIO_INT_CRCERROR_MASK;
   }
 
   /* Make sure all interrupts are disabled before we enable selectively */
@@ -355,14 +357,12 @@ enter_rx(void)
   }
 
   /* Prepare the RX buffer */
-  rx_buf_clear();
   nrf_radio_packetptr_set(&rx_buf);
 
   /* Initiate PPI timestamping */
   setup_ppi_timestamping();
 
   /* Make sure the correct interrupts are enabled */
-  rx_events_clear();
   setup_interrupts();
 
   if(curr_state != NRF_RADIO_STATE_RXIDLE) {
@@ -482,6 +482,9 @@ init(void)
 
   /* Start the RF driver process */
   process_start(&nrf52840_ieee_rf_process, NULL);
+
+  /* Prepare the RX buffer */
+  rx_buf_clear();
 
   /* Power on the radio */
   power_on_and_configure();
@@ -607,7 +610,8 @@ read_frame(void *buf, unsigned short bufsize)
   payload_len = rx_buf.phr - FCS_LEN;
 
   if(phr_is_valid(rx_buf.phr) == false) {
-    LOG_ERR("Incorrect length: %d\n", payload_len);
+    LOG_DBG("Incorrect length: %d\n", payload_len);
+    rx_buf_clear();
     enter_rx();
     return 0;
   }
@@ -635,6 +639,7 @@ read_frame(void *buf, unsigned short bufsize)
   LOG_DBG("Read frame: len=%d, RSSI=%d, LQI=0x%02x\n", payload_len, last_rssi,
            last_lqi);
 
+  rx_buf_clear();
   enter_rx();
 
   return payload_len;
@@ -643,28 +648,41 @@ read_frame(void *buf, unsigned short bufsize)
 static int
 receiving_packet(void)
 {
-  LOG_DBG("Receiving: ");
+  /* If we are powered off, we are not receiving */
+  if(radio_is_powered() == false) {
+    return NRF52840_RECEIVING_NO;
+  }
 
-  /*
-   * First check if we have received a PHR. When we enter RX the value of the
-   * PHR in our RX buffer is zero so we can return early.
-   */
-  if(phr_is_valid(rx_buf.phr) == false) {
-    LOG_DBG_("No\n");
+  /* If our state is not RX, we are not receiving */
+  if(nrf_radio_state_get() != NRF_RADIO_STATE_RX) {
+    return NRF52840_RECEIVING_NO;
+  }
+
+  if(rf_config.poll_mode) {
+    /* In poll mode, if the PHR is invalid we can return early */
+    if(phr_is_valid(rx_buf.phr) == false) {
+      return NRF52840_RECEIVING_NO;
+    }
+
+    /*
+     * If the PHR is valid and we are actually on, inspect EVENTS_CRCOK and
+     * _CRCERROR. If both of them are clear then reception is ongoing
+     */
+    if((nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK) == false) &&
+       (nrf_radio_event_check(NRF_RADIO_EVENT_CRCERROR) == false)) {
+      return NRF52840_RECEIVING_YES;
+    }
+
     return NRF52840_RECEIVING_NO;
   }
 
   /*
-   * We have received a valid PHR. Either we are in the process of receiving
-   * a frame, or we have fully received one. Check the radio state to
-   * determine which.
+   * In non-poll mode, we are receiving if the PHR is valid but the buffer
+   * does not contain a full packet.
    */
-  if(nrf_radio_state_get() == NRF_RADIO_STATE_RX) {
-    LOG_DBG_("Yes\n");
+  if(phr_is_valid(rx_buf.phr) == true && rx_buf.full == false) {
     return NRF52840_RECEIVING_YES;
   }
-
-  LOG_DBG_("No\n");
   return NRF52840_RECEIVING_NO;
 }
 /*---------------------------------------------------------------------------*/
@@ -681,10 +699,13 @@ pending_packet(void)
 
   /*
    * We have received a valid PHR. Either we are in the process of receiving
-   * a frame, or we have fully received one. Check the radio state to
-   * determine which.
+   * a frame, or we have fully received one. If we have received a frame then
+   * EVENTS_CRCOK should be asserted. In poll mode that's enough. In non-poll
+   * mode the interrupt handler will clear the event (else the interrupt would
+   * fire again), but we save the state in rx_buf.full.
    */
-  if(nrf_radio_state_get() == NRF_RADIO_STATE_RXIDLE) {
+  if((nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK) == true) ||
+     (rx_buf.full == true)) {
     return NRF52840_PENDING_YES;
   }
 
@@ -932,7 +953,11 @@ RADIO_IRQHandler(void)
   if(!rf_config.poll_mode) {
     if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK)) {
       nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
+      rx_buf.full = true;
       process_poll(&nrf52840_ieee_rf_process);
+    } else if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCERROR)) {
+      nrf_radio_event_clear(NRF_RADIO_EVENT_CRCERROR);
+      rx_buf_clear();
     }
   }
 }
