@@ -240,7 +240,8 @@ setup_interrupts(void)
 
   if(!rf_config.poll_mode) {
     nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
-    interrupts |= NRF_RADIO_INT_CRCOK_MASK;
+    nrf_radio_event_clear(NRF_RADIO_EVENT_CRCERROR);
+    interrupts |= NRF_RADIO_INT_CRCOK_MASK | NRF_RADIO_INT_CRCERROR_MASK;
   }
 
   /* Make sure all interrupts are disabled before we enable selectively */
@@ -933,7 +934,11 @@ RADIO_IRQHandler(void)
   if(!rf_config.poll_mode) {
     if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK)) {
       nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
+      rx_buf.full = true;
       process_poll(&nrf52840_ieee_rf_process);
+    } else if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCERROR)) {
+      nrf_radio_event_clear(NRF_RADIO_EVENT_CRCERROR);
+      rx_buf_clear();
     }
   }
 }
