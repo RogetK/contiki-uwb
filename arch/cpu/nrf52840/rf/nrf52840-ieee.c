@@ -610,7 +610,7 @@ read_frame(void *buf, unsigned short bufsize)
   payload_len = rx_buf.phr - FCS_LEN;
 
   if(phr_is_valid(rx_buf.phr) == false) {
-    LOG_ERR("Incorrect length: %d\n", payload_len);
+    LOG_DBG("Incorrect length: %d\n", payload_len);
     rx_buf_clear();
     enter_rx();
     return 0;
