@@ -156,6 +156,14 @@ static volatile rf_cfg_t rf_config = {
   .ed_threshold = NRF52840_CCA_ED_THRESHOLD,
 };
 /*---------------------------------------------------------------------------*/
+static nrf52840_ieee_callback_t ext_handler = NULL;
+/*---------------------------------------------------------------------------*/
+void
+nrf52840_ieee_register_handler(nrf52840_ieee_callback_t handler)
+{
+  ext_handler = handler;
+}
+/*---------------------------------------------------------------------------*/
 static bool
 phr_is_valid(uint8_t phr)
 {
@@ -950,6 +958,10 @@ PROCESS_THREAD(nrf52840_ieee_rf_process, ev, data)
 void
 RADIO_IRQHandler(void)
 {
+  if(ext_handler) {
+    ext_handler();
+  }
+
   if(!rf_config.poll_mode) {
     if(nrf_radio_event_check(NRF_RADIO_EVENT_CRCOK)) {
       nrf_radio_event_clear(NRF_RADIO_EVENT_CRCOK);
