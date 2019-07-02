@@ -80,8 +80,6 @@
 /* Enable S/W ACKs with CSMA */
 #define CSMA_CONF_SEND_SOFT_ACK       1
 /*---------------------------------------------------------------------------*/
-#define nrf52840_ieee_driver_max_payload_len        125
-/*---------------------------------------------------------------------------*/
 #if !NETSTACK_CONF_WITH_IPV6
 /* we only support IPv6 */
 #error "Only IPv6 stack is supported!"
