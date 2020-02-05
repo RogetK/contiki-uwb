@@ -12,7 +12,7 @@ endif
 endif
 
 # custom MAC: ble_ipsp_mac_driver
-# MAKE_MAC ?= MAKE_MAC_OTHER
+#MAKE_MAC ?= MAKE_MAC_OTHER
 
 $(info SDK: $(NRF52_SDK_ROOT))
 
@@ -20,15 +20,7 @@ ifeq ($(NRF52_DK_REVISION),)
 NRF52_DK_REVISION=pca10040
 endif
 
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-  ifeq ($(NRF52_SOFTDEVICE),)
-    NRF52_SOFTDEVICE := $(shell find $(NRF52_SDK_ROOT) -name *iot*_softdevice.hex | head -n 1)
-  endif
-  $(info SoftDevice: $(NRF52_SOFTDEVICE))
-  LDSCRIPT ?= $(CONTIKI_CPU)/ld/nrf52-$(NRF52_DK_REVISION)-sd.ld
-else
-  LDSCRIPT ?= $(CONTIKI_CPU)/ld/nrf52.ld
-endif
+LDSCRIPT ?= $(CONTIKI_CPU)/ld/nrf52.ld
 
 OUTPUT_FILENAME := $(CONTIKI_PROJECT)
 MAKEFILE_NAME := $(MAKEFILE_LIST)
@@ -51,15 +43,11 @@ endif
 remduplicates = $(strip $(if $1,$(firstword $1) $(call remduplicates,$(filter-out $(firstword $1),$1))))
 
 ### CPU-dependent directories
-CONTIKI_CPU_DIRS += . dev ble #compat
+CONTIKI_CPU_DIRS += . dev #compat
 
 ### CPU-dependent source files
 CONTIKI_CPU_SOURCEFILES += clock.c rtimer-arch.c uart0.c dbg.c watchdog.c
 CONTIKI_CPU_SOURCEFILES += int-master.c
-
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-CONTIKI_CPU_SOURCEFILES += ble-core.c ble-mac.c
-endif
 
 CONTIKI_SOURCEFILES += $(CONTIKI_CPU_SOURCEFILES)
 
@@ -76,13 +64,8 @@ C_SOURCE_FILES += $(NRF52_SDK_ROOT)/components/drivers_nrf/common/nrf_drv_common
                   $(NRF52_SDK_ROOT)/components/libraries/util/app_error.c \
                   $(NRF52_SDK_ROOT)/components/toolchain/system_nrf52.c
 
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-C_SOURCE_FILES += $(NRF52_SDK_ROOT)/components/softdevice/common/softdevice_handler/softdevice_handler.c \
-                  $(NRF52_SDK_ROOT)/components/ble/common/ble_advdata.c
-else
 C_SOURCE_FILES += $(NRF52_SDK_ROOT)/components/libraries/fifo/app_fifo.c \
                   $(NRF52_SDK_ROOT)/components/libraries/util/app_util_platform.c
-endif
 
 #assembly files common to all targets
 ASM_SOURCE_FILES  = $(NRF52_SDK_ROOT)/components/toolchain/gcc/gcc_startup_nrf52.s
@@ -105,18 +88,8 @@ INC_PATHS += components/device
 INC_PATHS += components/toolchain/gcc
 INC_PATHS += components/toolchain
 INC_PATHS += examples/bsp
-
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-INC_PATHS += components/softdevice/s1xx_iot/headers
-INC_PATHS += components/softdevice/s1xx_iot/headers/nrf52
-INC_PATHS += components/softdevice/common/softdevice_handler
-INC_PATHS += components/ble/common
-INC_PATHS += components/iot/common
-INC_PATHS += components/iot/ble_ipsp
-else
 INC_PATHS += components/drivers_nrf/nrf_soc_nosd
 INC_PATHS += components/libraries/fifo
-endif
 
 EXTERNALDIRS += $(addprefix $(NRF52_SDK_ROOT)/, $(INC_PATHS))
 
@@ -124,10 +97,6 @@ EXTERNALDIRS += $(addprefix $(NRF52_SDK_ROOT)/, $(INC_PATHS))
 BUILD_DIRECTORIES := $(sort $(OUTPUT_BINARY_DIRECTORY) $(LISTING_DIRECTORY))
 
 #flags common to all targets
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-CFLAGS += -DSOFTDEVICE_PRESENT
-CFLAGS += -DS132
-endif
 
 CFLAGS += -DNRF52
 CFLAGS += -DBOARD_$(shell echo $(NRF52_DK_REVISION) | tr a-z A-Z)
@@ -148,10 +117,6 @@ LDFLAGS += -Wl,--gc-sections
 LDFLAGS += --specs=nano.specs -lc -lnosys
 
 # Assembler flags
-ifneq ($(NRF52_WITHOUT_SOFTDEVICE),1)
-ASMFLAGS += -DSOFTDEVICE_PRESENT
-ASMFLAGS += -DS132
-endif
 ASMFLAGS += -x assembler-with-cpp
 ASMFLAGS += -DSWI_DISABLE0
 ASMFLAGS += -DNRF52
@@ -194,14 +159,6 @@ include $(ARCH_PATH)/cpu/arm/cortex-m/cm4/Makefile.cm4
 	@echo Flashing: $^
 	$(JLINK) $(JLINK_OPTS) -CommanderScript $*.jlink
 
-softdevice.jlink:
-	sed -e 's,#OUTPUT_FILENAME#,$(NRF52_SOFTDEVICE),' $(CONTIKI_CPU)/flash.jlink > $@
-
-softdevice.flash: softdevice.jlink
-	@echo Flashing: $(notdir $(NRF52_SOFTDEVICE))
-	$(JLINK) $(JLINK_OPTS) -CommanderScript $^
-
 erase:
 	$(JLINK) $(JLINK_OPTS) -CommanderScript $(CONTIKI_CPU)/erase.jlink
 
-.PHONY: softdevice.jlink
