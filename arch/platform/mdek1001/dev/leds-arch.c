@@ -62,22 +62,6 @@ leds_arch_init(void)
   nrf_gpio_cfg_output(LED_3);
   nrf_gpio_pin_set(LED_3);
 }
-/*---------------------------------------------------------------------------*/
-leds_mask_t
-leds_arch_get(void)
-{
-  //  return (leds_mask_t)(LED_IS_ON(LEDS_MASK) >> LED_START);
-  return 0;
-}
-/*---------------------------------------------------------------------------*/
-void
-leds_arch_set(leds_mask_t leds)
-{
-  // unsigned int mask = (unsigned int)leds << LED_START;
-  //  LEDS_OFF(LEDS_MASK);
-  //  LEDS_ON(mask);
-}
-/*---------------------------------------------------------------------------*/
 
 /**
  * @}
