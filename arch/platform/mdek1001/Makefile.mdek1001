@@ -3,8 +3,8 @@ ifndef CONTIKI
 endif
 
 CONTIKI_TARGET_DIRS += . dev config
-CONTIKI_SOURCEFILES += platform.c leds-arch.c
-CONTIKI_SOURCEFILES += 
+CONTIKI_SOURCEFILES += platform.c  leds-arch.c
+
 
 ### Unless the example dictates otherwise, build with code size optimisations switched off
 SMALL ?= 0

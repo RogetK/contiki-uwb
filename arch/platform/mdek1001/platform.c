@@ -54,7 +54,7 @@
 /*---------------------------------------------------------------------------*/
 /* Log configuration */
 #include "sys/log.h"
-#define LOG_MODULE "NRF52DK"
+#define LOG_MODULE "MDEK1001"
 #define LOG_LEVEL LOG_LEVEL_MAIN
 /*---------------------------------------------------------------------------*/
 /* Nordic semi OUI */
@@ -120,12 +120,12 @@ platform_init_stage_two(void)
 void
 platform_init_stage_three(void)
 {
-  process_start(&sensors_process, NULL);
+  // process_start(&sensors_process, NULL);
 
-  SENSORS_ACTIVATE(button_1);
-  SENSORS_ACTIVATE(button_2);
-  SENSORS_ACTIVATE(button_3);
-  SENSORS_ACTIVATE(button_4);
+  // SENSORS_ACTIVATE(button_1);
+  // SENSORS_ACTIVATE(button_2);
+  // SENSORS_ACTIVATE(button_3);
+  // SENSORS_ACTIVATE(button_4);
 }
 /*---------------------------------------------------------------------------*/
 void

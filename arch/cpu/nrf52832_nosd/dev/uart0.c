@@ -11,8 +11,8 @@ static int (*input_handler)(unsigned char c);
 
 #define UART_INSTANCE NRF_UART0
 /*---------------------------------------------------------------------------*/
-#define TX_PIN  6
-#define RX_PIN  8
+#define TX_PIN  5
+#define RX_PIN  11
 /*---------------------------------------------------------------------------*/
 void
 uart0_set_input(int (*input)(unsigned char c))
