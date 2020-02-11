@@ -32,7 +32,7 @@ JLINK_OPTS += -SelectEmuBySN $(NRF52_JLINK_SN)
 endif
 
 ### CPU-dependent directories
-CONTIKI_CPU_DIRS += . dev rf
+CONTIKI_CPU_DIRS += . dev 
 
 ### CPU-dependent source files
 CONTIKI_CPU_SOURCEFILES += clock.c rtimer-arch.c uart0.c dbg.c watchdog.c
@@ -40,8 +40,8 @@ CONTIKI_CPU_SOURCEFILES += int-master.c slip-arch.c
 
 CONTIKI_SOURCEFILES += $(CONTIKI_CPU_SOURCEFILES)
 
+### CFLAGS for NRF52832: you may need to add the BOARD for boards.h to compile
 CFLAGS += -DNRF52832_XXAA
-# CFLAGS += -DBOARD_MDEK1001
 CFLAGS += -D__HEAP_SIZE=512
 CFLAGS += -DSWI_DISABLE0
 CFLAGS += -DCONFIG_GPIO_AS_PINRESET
