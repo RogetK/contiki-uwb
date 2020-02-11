@@ -47,12 +47,20 @@
 #include "contiki.h"
 #include "dev/leds.h"
 
+#include "nrf_gpio.h"
 /*---------------------------------------------------------------------------*/
 void
 leds_arch_init(void)
 {
-   LEDS_CONFIGURE(LEDS_MASK);
-   LEDS_OFF(LEDS_MASK);
+  // Initialise MDEK1001 Non radio LEDS
+  nrf_gpio_cfg_output(LED_0);
+  nrf_gpio_pin_set(LED_0);
+  nrf_gpio_cfg_output(LED_1);
+  nrf_gpio_pin_set(LED_1);
+  nrf_gpio_cfg_output(LED_2);
+  nrf_gpio_pin_set(LED_2);
+  nrf_gpio_cfg_output(LED_3);
+  nrf_gpio_pin_set(LED_3);
 }
 /*---------------------------------------------------------------------------*/
 leds_mask_t
@@ -66,7 +74,7 @@ void
 leds_arch_set(leds_mask_t leds)
 {
   // unsigned int mask = (unsigned int)leds << LED_START;
-   LEDS_OFF(LEDS_MASK);
+  //  LEDS_OFF(LEDS_MASK);
   //  LEDS_ON(mask);
 }
 /*---------------------------------------------------------------------------*/

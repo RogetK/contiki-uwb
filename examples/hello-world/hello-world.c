@@ -38,8 +38,10 @@
  */
 
 #include "contiki.h"
-#include "nrf_gpio.h"
-#include "nrf_gpiote.h"
+
+// #include "nrf_gpio.h"
+// #include "nrf_gpiote.h"
+
 #include <stdio.h> /* For printf() */
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "Hello world process");
@@ -48,7 +50,6 @@ AUTOSTART_PROCESSES(&hello_world_process);
 PROCESS_THREAD(hello_world_process, ev, data)
 {
   static struct etimer timer;
-  nrf_gpio_cfg_output(31);
 
   PROCESS_BEGIN();
 
@@ -58,7 +59,7 @@ PROCESS_THREAD(hello_world_process, ev, data)
   while(1) {
     printf("Hello, world\n");
 
-    nrf_gpio_pin_toggle(31); 
+    nrf_gpio_pin_toggle(LED_1); 
     /* Wait for the periodic timer to expire and then restart the timer. */
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
     etimer_reset(&timer);

@@ -97,7 +97,7 @@ void
 platform_init_stage_one(void)
 {
   board_init();
-  leds_init();
+  leds_arch_init();
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -120,12 +120,7 @@ platform_init_stage_two(void)
 void
 platform_init_stage_three(void)
 {
-  // process_start(&sensors_process, NULL);
 
-  // SENSORS_ACTIVATE(button_1);
-  // SENSORS_ACTIVATE(button_2);
-  // SENSORS_ACTIVATE(button_3);
-  // SENSORS_ACTIVATE(button_4);
 }
 /*---------------------------------------------------------------------------*/
 void
