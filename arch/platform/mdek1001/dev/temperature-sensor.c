@@ -27,31 +27,79 @@
  * SUCH DAMAGE.
  *
  */
-/*---------------------------------------------------------------------------*/
-#ifndef CONTIKI_CONF_H
-#define CONTIKI_CONF_H
 
-#include <stdint.h>
-#include <inttypes.h>
+/**
+ * \addtogroup nrf52dk-devices Device drivers
+ * @{
+ *
+ * \addtogroup nrf52dk-devices-temp Temperature sensor driver
+ * This is a driver for nRF52832 hardware sensor.
+ *
+ * @{
+ *
+ * \file
+ *         Temperature sensor implementation.
+ * \author
+ *         Wojciech Bober <wojciech.bober@nordicsemi.no>
+ *
+ */
+#include "nrf_temp.h"
+#include "contiki.h"
+#include "dev/temperature-sensor.h"
+
+
+const struct sensors_sensor temperature_sensor;
+
 /*---------------------------------------------------------------------------*/
-/* Include Project Specific conf */
-#ifdef PROJECT_CONF_PATH
-#include PROJECT_CONF_PATH
-#endif /* PROJECT_CONF_PATH */
+/**
+ * \brief Returns device temperature
+ * \param type ignored
+ * \return Device temperature in degrees Celsius
+ */
+static int
+value(int type)
+{
+  int32_t volatile temp;
+
+  NRF_TEMP->TASKS_START = 1;
+  /* nRF52832 datasheet: one temperature measurement takes typically 36 us */
+  RTIMER_BUSYWAIT_UNTIL(NRF_TEMP->EVENTS_DATARDY, RTIMER_SECOND * 72 / 1000000);
+  NRF_TEMP->EVENTS_DATARDY = 0;
+  temp = nrf_temp_read();
+  NRF_TEMP->TASKS_STOP = 1;
+
+  return temp;
+}
 /*---------------------------------------------------------------------------*/
-/* Include platform peripherals configuration */
-#include "mdek1001-def.h"
-#include "nrf52832-def.h"
+/**
+ * \brief Configures temperature sensor
+ * \param type initializes the hardware sensor when \a type is set to
+ *             \a SENSORS_HW_INIT
+ * \param c ignored
+ * \return 1
+ * \note  This function does nothing when SoftDevice is present
+ */
+static int
+configure(int type, int c)
+{
+  if(type == SENSORS_HW_INIT) {
+    nrf_temp_init();
+  }
+  return 1;
+}
+/**
+ * \brief Return temperature sensor status
+ * \param type ignored
+ * \return 1
+ */
 /*---------------------------------------------------------------------------*/
-#ifndef SICSLOWPAN_CONF_FRAG
-#define SICSLOWPAN_CONF_FRAG                    1
-#endif
+static int
+status(int type)
+{
+  return 1;
+}
 /*---------------------------------------------------------------------------*/
-/* Include CPU-related configuration */
-#include "nrf52840-conf.h"
-/*---------------------------------------------------------------------------*/
-/** @} */
-#endif /* CONTIKI_CONF_H */
+SENSORS_SENSOR(temperature_sensor, TEMPERATURE_SENSOR, value, configure, status);
 /**
  * @}
  * @}

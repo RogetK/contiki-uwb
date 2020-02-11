@@ -27,31 +27,32 @@
  * SUCH DAMAGE.
  *
  */
-/*---------------------------------------------------------------------------*/
-#ifndef CONTIKI_CONF_H
-#define CONTIKI_CONF_H
 
-#include <stdint.h>
-#include <inttypes.h>
-/*---------------------------------------------------------------------------*/
-/* Include Project Specific conf */
-#ifdef PROJECT_CONF_PATH
-#include PROJECT_CONF_PATH
-#endif /* PROJECT_CONF_PATH */
-/*---------------------------------------------------------------------------*/
-/* Include platform peripherals configuration */
-#include "mdek1001-def.h"
-#include "nrf52832-def.h"
-/*---------------------------------------------------------------------------*/
-#ifndef SICSLOWPAN_CONF_FRAG
-#define SICSLOWPAN_CONF_FRAG                    1
-#endif
-/*---------------------------------------------------------------------------*/
-/* Include CPU-related configuration */
-#include "nrf52840-conf.h"
-/*---------------------------------------------------------------------------*/
-/** @} */
-#endif /* CONTIKI_CONF_H */
+/**
+ * \addtogroup nrf52dk-devices Device drivers
+ * @{
+ *
+ * \addtogroup nrf52dk-devices-temp Temperature sensor driver
+ * @{
+ *
+ * \file
+ *         Temperature sensor header file.
+ * \author
+ *         Wojciech Bober <wojciech.bober@nordicsemi.no>
+ *
+ */
+
+#ifndef TEMPERATURE_SENSOR_H_
+#define TEMPERATURE_SENSOR_H_
+
+#include "lib/sensors.h"
+
+extern const struct sensors_sensor temperature_sensor;
+
+#define TEMPERATURE_SENSOR "Temperature"
+
+#endif /* TEMPERATURE_SENSOR_H_ */
+
 /**
  * @}
  * @}

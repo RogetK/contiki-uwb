@@ -28,30 +28,44 @@
  *
  */
 /*---------------------------------------------------------------------------*/
-#ifndef CONTIKI_CONF_H
-#define CONTIKI_CONF_H
+/**
+ * \addtogroup nrf52dk-devices Device drivers
+ * @{
+ *
+ * \addtogroup nrf52dk-devices-button Buttons driver
+ * @{
+ *
+ * \file
+ *         Header file for the nRF52dk button driver.
+ * \author
+ *         Wojciech Bober <wojciech.bober@nordicsemi.no>
+ *
+ */
+/*---------------------------------------------------------------------------*/
+#ifndef BUTTON_SENSOR_H_
+#define BUTTON_SENSOR_H_
+/*---------------------------------------------------------------------------*/
+#include "lib/sensors.h"
+/*---------------------------------------------------------------------------*/
+#define BUTTON_SENSOR "Button"
+/*---------------------------------------------------------------------------*/
+#define BUTTON_SENSOR_VALUE_STATE    0 /**< Can be passed to value() function
+                                            to get current button state */
+#define BUTTON_SENSOR_VALUE_DURATION 1 /**< Can be passed to value() function
+                                            to get low state duration */
 
-#include <stdint.h>
-#include <inttypes.h>
+#define BUTTON_SENSOR_VALUE_RELEASED 0
+#define BUTTON_SENSOR_VALUE_PRESSED  1
 /*---------------------------------------------------------------------------*/
-/* Include Project Specific conf */
-#ifdef PROJECT_CONF_PATH
-#include PROJECT_CONF_PATH
-#endif /* PROJECT_CONF_PATH */
+extern const struct sensors_sensor buttons[];
 /*---------------------------------------------------------------------------*/
-/* Include platform peripherals configuration */
-#include "mdek1001-def.h"
-#include "nrf52832-def.h"
+#define button_1 buttons[0]
+#define button_2 buttons[1]
+#define button_3 buttons[2]
+#define button_4 buttons[3]
 /*---------------------------------------------------------------------------*/
-#ifndef SICSLOWPAN_CONF_FRAG
-#define SICSLOWPAN_CONF_FRAG                    1
-#endif
+#endif /* BUTTON_SENSOR_H_ */
 /*---------------------------------------------------------------------------*/
-/* Include CPU-related configuration */
-#include "nrf52840-conf.h"
-/*---------------------------------------------------------------------------*/
-/** @} */
-#endif /* CONTIKI_CONF_H */
 /**
  * @}
  * @}

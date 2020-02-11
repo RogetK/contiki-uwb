@@ -27,32 +27,51 @@
  * SUCH DAMAGE.
  *
  */
-/*---------------------------------------------------------------------------*/
-#ifndef CONTIKI_CONF_H
-#define CONTIKI_CONF_H
 
-#include <stdint.h>
-#include <inttypes.h>
-/*---------------------------------------------------------------------------*/
-/* Include Project Specific conf */
-#ifdef PROJECT_CONF_PATH
-#include PROJECT_CONF_PATH
-#endif /* PROJECT_CONF_PATH */
-/*---------------------------------------------------------------------------*/
-/* Include platform peripherals configuration */
-#include "mdek1001-def.h"
-#include "nrf52832-def.h"
-/*---------------------------------------------------------------------------*/
-#ifndef SICSLOWPAN_CONF_FRAG
-#define SICSLOWPAN_CONF_FRAG                    1
-#endif
-/*---------------------------------------------------------------------------*/
-/* Include CPU-related configuration */
-#include "nrf52840-conf.h"
-/*---------------------------------------------------------------------------*/
-/** @} */
-#endif /* CONTIKI_CONF_H */
 /**
+ * \addtogroup nrf52dk
+ * @{
+ *
+ * \addtogroup nrf52dk-devices Device drivers
+ * @{
+ *
+ * \addtogroup nrf52dk-devices-led LED driver
+ * @{
+ *
+ * \file
+ *         Architecture specific LED driver implementation for nRF52 DK.
+ * \author
+ *         Wojciech Bober <wojciech.bober@nordicsemi.no>
+ */
+#include "boards.h"
+#include "contiki.h"
+#include "dev/leds.h"
+
+/*---------------------------------------------------------------------------*/
+void
+leds_arch_init(void)
+{
+  LEDS_CONFIGURE(LEDS_MASK);
+  LEDS_OFF(LEDS_MASK);
+}
+/*---------------------------------------------------------------------------*/
+leds_mask_t
+leds_arch_get(void)
+{
+  return (leds_mask_t)(LED_IS_ON(LEDS_MASK) >> LED_START);
+}
+/*---------------------------------------------------------------------------*/
+void
+leds_arch_set(leds_mask_t leds)
+{
+  unsigned int mask = (unsigned int)leds << LED_START;
+  LEDS_OFF(LEDS_MASK);
+  LEDS_ON(mask);
+}
+/*---------------------------------------------------------------------------*/
+
+/**
+ * @}
  * @}
  * @}
  */

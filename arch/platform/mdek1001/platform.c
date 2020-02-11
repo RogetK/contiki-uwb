@@ -1,8 +1,3 @@
-/*---------------------------------------------------------------------------*/
-/**
- * @}
- */
-
 /*
  * Copyright (c) 2015, Nordic Semiconductor
  * All rights reserved.
@@ -37,40 +32,63 @@
  * \addtogroup nrf52dk nRF52 Development Kit
  * @{
  */
-#include <stdio.h>
-#include <stdint.h>
-
-#include "nordic_common.h"
 #include "contiki.h"
+#include "nordic_common.h"
 
-#include "nrf_drv_config.h"
-#include "nrf_drv_gpiote.h"
+#include "sdk_config.h"
+#include "nrfx_gpiote.h"
+#include "nrf.h"
 
 #include "contiki-net.h"
 #include "leds.h"
 #include "lib/sensors.h"
+#include "dev/button-sensor.h"
 
 #include "dev/serial-line.h"
 #include "dev/uart0.h"
 #include "lpm.h"
+
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 /*---------------------------------------------------------------------------*/
 /* Log configuration */
 #include "sys/log.h"
-#define LOG_MODULE "DWM1001"
+#define LOG_MODULE "NRF52DK"
 #define LOG_LEVEL LOG_LEVEL_MAIN
-
 /*---------------------------------------------------------------------------*/
-/**
- * \brief Board specific initialization
- *
- * This function will enable SoftDevice is present.
- */
+/* Nordic semi OUI */
+#define NORDIC_SEMI_VENDOR_OUI 0xF4CE36
+/*---------------------------------------------------------------------------*/
+static void
+populate_link_address(void)
+{
+  uint8_t device_address[8];
+  uint32_t device_address_low;
+
+  /*
+   * Populate the link address' 3 MSBs using Nordic's OUI.
+   * For the remaining 5 bytes just use any 40 of the 48 FICR->DEVICEADDR
+   * Those are random, so endianness is irrelevant.
+   */
+  device_address[0] = (NORDIC_SEMI_VENDOR_OUI) >> 16 & 0xFF;
+  device_address[1] = (NORDIC_SEMI_VENDOR_OUI) >> 8 & 0xFF;
+  device_address[2] = NORDIC_SEMI_VENDOR_OUI & 0xFF;
+  device_address[3] = NRF_FICR->DEVICEADDR[1] & 0xFF;
+
+  device_address_low = NRF_FICR->DEVICEADDR[0];
+  memcpy(&device_address[4], &device_address_low, 4);
+
+  memcpy(&linkaddr_node_addr, &device_address[8 - LINKADDR_SIZE],
+         LINKADDR_SIZE);
+}
+/*---------------------------------------------------------------------------*/
 static void
 board_init(void)
 {
 #ifdef PLATFORM_HAS_BUTTON
-  if (!nrf_drv_gpiote_is_init()) {
-    nrf_drv_gpiote_init();
+  if(!nrfx_gpiote_is_init()) {
+    nrfx_gpiote_init();
   }
 #endif
 }
@@ -85,25 +103,29 @@ platform_init_stage_one(void)
 void
 platform_init_stage_two(void)
 {
-  // Seed value is ignored since hardware RNG is used.
+  /* Seed value is ignored since hardware RNG is used. */
   random_init(0);
 
-#ifdef UART0_ENABLED
+#if UART0_ENABLED
   uart0_init();
-#if SLIP_ARCH_CONF_ENABLE
-  #error Platform does not support SLIP
-#else
-  uart0_set_input(serial_line_input_byte);
   serial_line_init();
+#if BUILD_WITH_SHELL
+  uart0_set_input(serial_line_input_byte);
 #endif
 #endif
 
+  populate_link_address();
 }
 /*---------------------------------------------------------------------------*/
 void
 platform_init_stage_three(void)
 {
-  //process_start(&sensors_process, NULL);
+  process_start(&sensors_process, NULL);
+
+  SENSORS_ACTIVATE(button_1);
+  SENSORS_ACTIVATE(button_2);
+  SENSORS_ACTIVATE(button_3);
+  SENSORS_ACTIVATE(button_4);
 }
 /*---------------------------------------------------------------------------*/
 void
