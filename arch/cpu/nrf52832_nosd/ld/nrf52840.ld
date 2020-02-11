@@ -5,11 +5,11 @@ GROUP(-lgcc -lc -lnosys)
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x1f000, LENGTH = 0x61000
-  RAM (rwx) :  ORIGIN = 0x08000000, LENGTH = 0x8000
+  FLASH (rx) : ORIGIN = 0x0, LENGTH = 0x80000
+  RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x10000
 }
 
-INCLUDE "nrf5x_common.ld"
+INCLUDE "nrf_common.ld"
 
 /* These symbols are used by the stack check library. */
 _stack = end;

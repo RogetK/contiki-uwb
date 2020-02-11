@@ -29,10 +29,56 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*---------------------------------------------------------------------------*/
-#ifndef NRF52832_DEF_H_
-#define NRF52832_DEF_H_
+#ifndef NRF52840_DEF_H_
+#define NRF52840_DEF_H_
 /*---------------------------------------------------------------------------*/
 #include "cm4/cm4-def.h"
+/*---------------------------------------------------------------------------*/
+/* Path to headers with implementation of mutexes, atomic and memory barriers */
+#define MUTEX_CONF_ARCH_HEADER_PATH          "mutex-cortex.h"
+#define ATOMIC_CONF_ARCH_HEADER_PATH         "atomic-cortex.h"
+#define MEMORY_BARRIER_CONF_ARCH_HEADER_PATH "memory-barrier-cortex.h"
+/*---------------------------------------------------------------------------*/
+/* Do the math in 32bits to save precision.
+ * Round to nearest integer rather than truncate. */
+#define US_TO_RTIMERTICKS(US)  ((US) >= 0 ?                        \
+                               (((int32_t)(US) * (RTIMER_ARCH_SECOND) + 500000) / 1000000L) :      \
+                               ((int32_t)(US) * (RTIMER_ARCH_SECOND) - 500000) / 1000000L)
+
+#define RTIMERTICKS_TO_US(T)   ((T) >= 0 ?                     \
+                               (((int32_t)(T) * 1000000L + ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND)) : \
+                               ((int32_t)(T) * 1000000L - ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND))
+
+/* A 64-bit version because the 32-bit one cannot handle T >= 4295 ticks.
+   Intended only for positive values of T. */
+#define RTIMERTICKS_TO_US_64(T)  ((uint32_t)(((uint64_t)(T) * 1000000 + ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND)))
+/*---------------------------------------------------------------------------*/
+#define RADIO_PHY_OVERHEAD            3
+#define RADIO_BYTE_AIR_TIME          32
+#define RADIO_SHR_LEN                 5 /* Synch word + SFD */
+#define RADIO_DELAY_BEFORE_TX         \
+  ((unsigned)US_TO_RTIMERTICKS(RADIO_SHR_LEN * RADIO_BYTE_AIR_TIME))
+/* Very conservative value moved over from CC2538 */
+#define RADIO_DELAY_BEFORE_RX         ((unsigned)US_TO_RTIMERTICKS(250))
+#define RADIO_DELAY_BEFORE_DETECT     2
+
+#define TSCH_CONF_HW_FRAME_FILTERING  0
+#define TSCH_CONF_RADIO_ON_DURING_TIMESLOT 1
+
+#ifndef TSCH_CONF_BASE_DRIFT_PPM
+/*
+ * The drift compared to "true" 10ms slots.
+ * Enable adaptive sync to enable compensation for this.
+ * Slot length 10000 usec
+ * 1000000 / 62500 = 16 usec / rtimer tick
+ * 10 ms is 625 ticks, exactly
+ * Real slot duration 10000 usec
+ */
+#define TSCH_CONF_BASE_DRIFT_PPM 0
+#endif
+/*---------------------------------------------------------------------------*/
+/* Enable S/W ACKs with CSMA */
+#define CSMA_CONF_SEND_SOFT_ACK       1
 /*---------------------------------------------------------------------------*/
 #if !NETSTACK_CONF_WITH_IPV6
 /* we only support IPv6 */
@@ -41,5 +87,5 @@
 /*---------------------------------------------------------------------------*/
 #define RTIMER_ARCH_SECOND 62500
 /*---------------------------------------------------------------------------*/
-#endif /* NRF52832_DEF_H_ */
+#endif /* NRF52840_DEF_H_ */
 /*---------------------------------------------------------------------------*/

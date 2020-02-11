@@ -42,10 +42,6 @@
 #ifndef LPM_H
 #define LPM_H
 
-#ifdef SOFTDEVICE_PRESENT
-#include "nrf_soc.h"
-#endif
-
 /**
  * \brief Stop and wait for an event
  *
@@ -53,11 +49,7 @@
 static inline void
 lpm_drop(void)
 {
-#ifdef SOFTDEVICE_PRESENT
-  sd_app_evt_wait();
-#else
   __WFI();
-#endif
 }
 
 #endif /* DEV_LPM_H_ */
