@@ -61,6 +61,11 @@
 #define NORDIC_SEMI_VENDOR_OUI 0xF4CE36
 /*---------------------------------------------------------------------------*/
 /* DW1000 interface */
+#define HAS_DW1000 1
+#if (HAS_DW1000)
+#include "dev/dw1000_init.h"
+  dw_init_state_t init_state;
+#endif
 /*---------------------------------------------------------------------------*/
 
 static void
@@ -101,6 +106,11 @@ platform_init_stage_one(void)
 {
   board_init();
   leds_arch_init();
+
+  #if (HAS_DW1000)
+    dw1000_init();
+  #endif
+
 }
 /*---------------------------------------------------------------------------*/
 void

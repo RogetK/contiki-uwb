@@ -1,5 +1,10 @@
 #include "dw1000_init.h"
 #include "port_platform.h"
+#include "mdek1001-def.h"
+
+#include "sys/log.h"
+#define LOG_MODULE "DW1000"
+#define LOG_LEVEL LOG_LEVEL_INFO
 
 /*DW1000 config function*/
 // static dwt_config_t config = {
@@ -14,14 +19,17 @@
 //     DWT_PHRMODE_STD,  /* PHY header mode. */
 //     (65 + 8 - 8)     /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
 // };
-#include "sys/log.h"
-#define LOG_MODULE "DW1000"
-#define LOG_LEVEL LOG_LEVEL_INFO
 
 void dw1000_init(void) {
     reset_DW1000();
-
     port_set_dw1000_slowrate();			
-    if (dwt_initialise(DWT_LOADUCODE) == DWT_ERROR) LOG_WARN("DW1000 Failed to Initialise, Radio not working\n");
+    if (dwt_initialise(DWT_LOADUCODE) == DWT_ERROR) {
+        // LOG_INFO("DW1000 Init Failed\n");
+    } else {
+        // LOG_INFO("DW1000 Init Success\n");
+    }
+}
+
+void dw1000_stage_one(){
 
 }
