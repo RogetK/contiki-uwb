@@ -67,6 +67,16 @@
   dw_init_state_t init_state;
 #endif
 /*---------------------------------------------------------------------------*/
+/* TSCH MACROS */
+// #define RADIO_PHY_OVERHEAD        radio_phy_overhead()
+// #define RADIO_BYTE_AIR_TIME       radio_byte_air_time()
+// #define RADIO_DELAY_BEFORE_TX     radio_delay_before_tx()
+// #define RADIO_DELAY_BEFORE_RX     radio_delay_before_rx()
+// #define RADIO_DELAY_BEFORE_DETECT radio_delay_before_detect()
+
+// #define TSCH_CONF_DEFAULT_TIMESLOT_TIMING   radio_tsch_timeslot_timing()
+/*---------------------------------------------------------------------------*/
+
 
 static void
 populate_link_address(void)

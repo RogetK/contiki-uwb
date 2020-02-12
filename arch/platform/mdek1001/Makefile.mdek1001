@@ -2,12 +2,13 @@ ifndef CONTIKI
   $(error CONTIKI not defined! You must specify where CONTIKI resides!)
 endif
 
+CLEAN += *.mdek1001
+
 ### Add Nordic board type
 CFLAGS += -DBOARD_MDEK1001
 
 CONTIKI_TARGET_DIRS += . dev config
 CONTIKI_SOURCEFILES += platform.c  leds-arch.c dw1000_init.c
-
 
 ### Unless the example dictates otherwise, build with code size optimisations switched off
 SMALL ?= 0

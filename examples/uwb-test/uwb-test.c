@@ -2,7 +2,6 @@
 #include <stdio.h> /* For printf() */
 
 #include "mdek1001-def.h"
-#include "deca_device_api.h"
 
 /*---------------------------------------------------------------------------*/
 #include "sys/log.h"
@@ -18,7 +17,6 @@ PROCESS_THREAD(heartbeat_process, ev, data)
 
   PROCESS_BEGIN();
   LOG_INFO("Process started\n\n\n");
-  dwt_rxenable(0);
   /* Setup a periodic timer that expires after 10 seconds. */
   etimer_set(&timer, CLOCK_SECOND * 0.5);
 
