@@ -49,6 +49,55 @@
 // <h> nRF_Drivers
 
 //==========================================================
+// <e> SPI_ENABLED - nrf_drv_spi - SPI/SPIM peripheral driver
+//==========================================================
+#ifndef SPI_ENABLED
+#define SPI_ENABLED 1
+#endif
+// <o> SPI_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
+ 
+
+// <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
+// <0=> 0 (highest) 
+// <1=> 1 
+// <2=> 2 
+// <3=> 3 
+// <4=> 4 
+// <5=> 5 
+// <6=> 6 
+// <7=> 7 
+
+#ifndef SPI_DEFAULT_CONFIG_IRQ_PRIORITY
+#define SPI_DEFAULT_CONFIG_IRQ_PRIORITY 7
+#endif
+
+// <e> SPI1_ENABLED - Enable SPI1 instance
+//==========================================================
+#ifndef SPI1_ENABLED
+#define SPI1_ENABLED 1
+#endif
+// <q> SPI1_USE_EASY_DMA  - Use EasyDMA
+ 
+
+#ifndef SPI1_USE_EASY_DMA
+#define SPI1_USE_EASY_DMA 0
+#endif
+
+// <o> SPI1_DEFAULT_FREQUENCY  - SPI frequency
+ 
+// <33554432=> 125 kHz 
+// <67108864=> 250 kHz 
+// <134217728=> 500 kHz 
+// <268435456=> 1 MHz 
+// <536870912=> 2 MHz 
+// <1073741824=> 4 MHz 
+// <2147483648=> 8 MHz 
+
+#ifndef SPI1_DEFAULT_FREQUENCY
+#define SPI1_DEFAULT_FREQUENCY 1073741824
+#endif
+
+//==========================================================
 // <e> GPIOTE_ENABLED - nrf_drv_gpiote - GPIOTE peripheral driver - legacy layer
 //==========================================================
 #ifndef GPIOTE_ENABLED

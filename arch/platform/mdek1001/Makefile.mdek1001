@@ -6,7 +6,7 @@ endif
 CFLAGS += -DBOARD_MDEK1001
 
 CONTIKI_TARGET_DIRS += . dev config
-CONTIKI_SOURCEFILES += platform.c  leds-arch.c
+CONTIKI_SOURCEFILES += platform.c  leds-arch.c dw1000_init.c
 
 
 ### Unless the example dictates otherwise, build with code size optimisations switched off

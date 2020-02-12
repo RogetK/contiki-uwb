@@ -51,7 +51,7 @@ int writetospi( uint16 headerLength, const uint8 *headerBuffer, uint32 bodylengt
 decaIrqStatus_t decamutexon(void);
 void decamutexoff(decaIrqStatus_t s);
 
-#if defined(BOARD_DW1001_DEV)
+#if defined(BOARD_MDEK1001)
 #define SPI_CS_PIN   17 /**< SPI CS Pin.*/
 #else
 #error "Example is not supported on that board."
