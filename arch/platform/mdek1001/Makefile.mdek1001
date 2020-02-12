@@ -15,3 +15,5 @@ SMALL ?= 0
 ### Define the CPU directory and pull in the correct CPU makefile.
 CONTIKI_CPU=$(ARCH_PATH)/cpu/nrf52832_nosd
 include $(CONTIKI_CPU)/Makefile.nrf52832
+
+MODULES += arch/dev/dw1000
