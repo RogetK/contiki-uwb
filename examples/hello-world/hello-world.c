@@ -38,9 +38,7 @@
  */
 
 #include "contiki.h"
-
-// #include "nrf_gpio.h"
-// #include "nrf_gpiote.h"
+#include "deca_device_api.h"
 
 #include <stdio.h> /* For printf() */
 /*---------------------------------------------------------------------------*/
@@ -52,6 +50,8 @@ PROCESS_THREAD(hello_world_process, ev, data)
   static struct etimer timer;
 
   PROCESS_BEGIN();
+
+  // dwt_rxenable(0);
 
   /* Setup a periodic timer that expires after 10 seconds. */
   etimer_set(&timer, CLOCK_SECOND * 10);

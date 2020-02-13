@@ -36,6 +36,7 @@ dw_init_state_t dw_init(dw_init_state_t state) {
 }
 
 dw_init_state_t dw_get_state(dw_init_state_t state){
+    
     switch(state.init){
         case -1:
         LOG_WARN("DW1000 Init Failure\n");
@@ -48,9 +49,5 @@ dw_init_state_t dw_get_state(dw_init_state_t state){
         default:
         break;
     }
-
-    if (state.config) LOG_INFO("Default radio parameters set\n");
-    if (state.leds) LOG_INFO("Radio status LEDs set\n");
-    
     return state;
 }

@@ -11,33 +11,41 @@
  * @author DecaWave
  */
 
+#include "mdek1001-def.h"
+
 #include "port_platform.h"
 #include "deca_device_api.h"
+
+// nRF platform specific headers
+#include "nrf_drv_spi.h"
+#include "app_util_platform.h"
+#include "nrf_gpio.h"
+#include "nrf_delay.h"
+#include "nrf_log.h"
+#include "boards.h"
+#include "app_error.h"
+
+
 /****************************************************************************//**
  *
  *                              APP global variables
  *
  *******************************************************************************/
+#define SPI_INSTANCE  1 /**< SPI instance index. */
+static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI instance. */
+static volatile bool spi_xfer_done;  /**< Flag used to indicate that SPI instance completed the transfer. */
 
-
+/**
+ * @brief SPI user event handler.
+ * @param event
+ */
+void spi_event_handler(nrf_drv_spi_evt_t const * p_event, void * p_context);
 /****************************************************************************//**
  *
  *                  Port private variables and function prototypes
  *
  *******************************************************************************/
 static volatile uint32_t signalResetDone;
-
-/****************************************************************************//**
- *
- *                              Time section
- *
- *******************************************************************************/
-
-/****************************************************************************//**
- *
- *                              END OF Time section
- *
- *******************************************************************************/
 
 /****************************************************************************//**
  *
@@ -207,7 +215,7 @@ void reset_DW1000(void)
 void port_set_dw1000_slowrate(void)
 {
 	nrf_drv_spi_config_t  spi_config = NRF_DRV_SPI_DEFAULT_CONFIG_2M(SPI_INSTANCE);
-	spi_config.ss_pin = SPI_CS_PIN;
+	spi_config.ss_pin = SPIM1_SS_PIN;
 	APP_ERROR_CHECK( nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL) );
 	nrf_delay_ms(2);	
 }
@@ -219,7 +227,7 @@ void port_set_dw1000_slowrate(void)
 void port_set_dw1000_fastrate(void)
 { nrf_drv_spi_uninit(&spi);
 	nrf_drv_spi_config_t  spi_config = NRF_DRV_SPI_DEFAULT_CONFIG_8M(SPI_INSTANCE);
-	spi_config.ss_pin = SPI_CS_PIN;
+	spi_config.ss_pin = SPIM1_SS_PIN;
 	APP_ERROR_CHECK( nrf_drv_spi_init(&spi, &spi_config, spi_event_handler,NULL) );
 	nrf_delay_ms(2);	
 }
