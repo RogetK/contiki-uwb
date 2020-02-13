@@ -120,9 +120,9 @@ platform_init_stage_one(void)
   board_init();
   leds_arch_init();
 
-  #if (HAS_DW1000)
-    init_state = dw_init(init_state);
-  #endif
+  // #if (HAS_DW1000)
+  //   init_state = dw_init(init_state);
+  // #endif
 
 }
 /*---------------------------------------------------------------------------*/
@@ -146,7 +146,7 @@ platform_init_stage_two(void)
 void
 platform_init_stage_three(void)
 {
-  dw_get_state(init_state);
+  // dw_get_state(init_state);
 }
 /*---------------------------------------------------------------------------*/
 void
