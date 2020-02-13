@@ -17,20 +17,20 @@
 #include "deca_device_api.h"
 
 // nRF platform specific headers
+#include "boards.h"
 #include "nrf_drv_spi.h"
 #include "app_util_platform.h"
 #include "nrf_gpio.h"
 #include "nrf_delay.h"
 #include "nrf_log.h"
-#include "boards.h"
 #include "app_error.h"
-
 
 /****************************************************************************//**
  *
  *                              APP global variables
  *
  *******************************************************************************/
+
 #define SPI_INSTANCE  1 /**< SPI instance index. */
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  /**< SPI instance. */
 static volatile bool spi_xfer_done;  /**< Flag used to indicate that SPI instance completed the transfer. */
@@ -40,6 +40,7 @@ static volatile bool spi_xfer_done;  /**< Flag used to indicate that SPI instanc
  * @param event
  */
 void spi_event_handler(nrf_drv_spi_evt_t const * p_event, void * p_context);
+
 /****************************************************************************//**
  *
  *                  Port private variables and function prototypes
@@ -49,23 +50,9 @@ static volatile uint32_t signalResetDone;
 
 /****************************************************************************//**
  *
- *                              Configuration section
- *
- *******************************************************************************/
-
-/****************************************************************************//**
- *
- *                          End of configuration section
- *
- *******************************************************************************/
-
-/****************************************************************************//**
- *
  *                          DW1000 port section
  *
  *******************************************************************************/
- // YB : STM HAL based function have to be updated using NRF drivers
-
 
 /* @fn      setup_DW1000RSTnIRQ
  * @brief   setup the DW_RESET pin mode
@@ -210,7 +197,7 @@ void reset_DW1000(void)
 
 /* @fn      port_set_dw1000_slowrate
  * @brief   set 2MHz
- *          n
+ *          
  * */
 void port_set_dw1000_slowrate(void)
 {
@@ -232,60 +219,13 @@ void port_set_dw1000_fastrate(void)
 	nrf_delay_ms(2);	
 }
 
-
+/* @fn      deca_sleep 
+ * @brief   set sleep function in milliseconds can replace this with 
+ *          contiki sleep functions as well.
+ *         
+ * */
 void deca_sleep(unsigned int time_ms)
 {
     nrf_delay_ms(time_ms);
 }
-
-
-// currently do nothing
-decaIrqStatus_t decamutexon(void)           
-{
-//	u16 j = (u16)(NVIC->ISER[0] & (1 << 5));
-
-	//	if(j) 
-//  {
-//		NVIC->ISER[0] &= ~(1 << 5); //disable the external interrupt line
-//	}
-//	return j ; 
-
-return 0;	
-}
-
-
-// currently do nothing
-void decamutexoff(decaIrqStatus_t s)       
-{
-//	if(j) 
-
-	//	{                 
-//		NVIC->ISER[0] |= (1 << 5);;
-//	}
-	;	
-}
-
-/****************************************************************************//**
- *
- *                          End APP port section
- *
- *******************************************************************************/
-
-
-
-/****************************************************************************//**
- *
- *                              IRQ section
- *
- *******************************************************************************/
-
-/****************************************************************************//**
- *
- *                              END OF IRQ section
- *
- *******************************************************************************/
-
-/****************************************************************************//**
- *
- *******************************************************************************/
 

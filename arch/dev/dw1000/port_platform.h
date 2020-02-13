@@ -11,6 +11,12 @@
  * @author DecaWave
  */
 
+/*
+  * For porting this radio to your specific hardware create 
+  * dw1000_port_platform.c in arch/platform/your_platform 
+  * and create the function definitions within that file.
+*/
+
 
 #ifndef PORT_PLATFORM_H_
 #define PORT_PLATFORM_H_
