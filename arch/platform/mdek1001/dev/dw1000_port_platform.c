@@ -229,3 +229,10 @@ void deca_sleep(unsigned int time_ms)
     nrf_delay_ms(time_ms);
 }
 
+decaIrqStatus_t decamutexon(void) {
+  // need to add things if I intend to use interrrupts
+}
+
+void decamutexoff(decaIrqStatus_t s) {
+  // interrupt service routine mutex
+}

@@ -14,7 +14,10 @@ PROCESS(dw1000_process, "DW1000 driver");
 /*---------------------------------------------------------------------------*/
 
 #define MAX_PAYLOAD_LEN (127)
+#define CRC_LEN 2
+#define DW1000_RX_AFTER_TX_DELAY 0
 
+static bool packet_pending;
 /*------------------------------------------------------------------------
  * Function Declarations
  *----------------------------------------------------------------------*/
@@ -75,7 +78,8 @@ static dwt_config_t config = {
 };
 
 
-static int init(void) {
+static int 
+init(void) {
     int result;
 
     /* Reset radio */
@@ -93,62 +97,167 @@ static int init(void) {
     /* Set radio indicator LEDs */
     dwt_setleds(1);
 
+    process_start(&dw1000_process, NULL);
     return RADIO_RESULT_OK;
 }
 
-static int prepare(const void *payload, unsigned short payload_len) {
-    int result;
-    if (payload_len > MAX_PAYLOAD_LEN) return RADIO_TX_ERR;
+/*
+ * ------------------------------------------------------------------------
+ */
 
-    dwt_writetxfctrl(payload_len, 0, 0);
-    result = dwt_writetxdata(payload_len, &payload, 0);
-    if (result == DWT_ERROR) return RADIO_TX_ERR;
+static int 
+prepare(const void *payload, unsigned short payload_len) {
+    uint8_t frame_len = payload_len + CRC_LEN;
+    if (frame_len > MAX_PAYLOAD_LEN) return RADIO_TX_ERR;
+
+    dwt_writetxdata(payload_len, &payload, 0);
+    dwt_writetxfctrl(frame_len, 0, 0);
+
     return RADIO_RESULT_OK;
 }
 
-static int transmit(unsigned short transmit_len) {
-    if (transmit_len > MAX_PAYLOAD_LEN) {
-        return RADIO_TX_ERR;
-    }
+/*
+ * ------------------------------------------------------------------------
+ */
 
+static int 
+transmit(unsigned short transmit_len) {
+    if (transmit_len > MAX_PAYLOAD_LEN) return RADIO_TX_ERR;
+    
     // Ensure radio is in a IDLE state before sending.
     dwt_forcetrxoff(); 
-    
+    dwt_setrxaftertxdelay(DW1000_RX_AFTER_TX_DELAY);
+
     // start transmission
-    if (dwt_starttx(0) == DWT_ERROR){
-        return RADIO_TX_ERR;
+    if (dwt_starttx(0) != DWT_SUCCESS) return RADIO_TX_ERR;
+
+    return RADIO_TX_OK;
+}
+
+/*
+ * ------------------------------------------------------------------------
+ */
+
+
+static int 
+send(const void *payload, unsigned short payload_len) {
+    if (prepare(payload, payload_len) == 0) {
+        return transmit(payload_len);
     } else {
-        return RADIO_TX_OK;
+        return RADIO_TX_ERR;
     }
 }
 
-static int send(const void *payload, unsigned short payload_len) {
-    prepare(payload, payload_len);
+/*
+ * ------------------------------------------------------------------------
+ */
+
+
+static int 
+read(void *buf, unsigned short bufsize) {
+    dwt_readrxdata(&buf, bufsize, 0);
+    return bufsize;
 }
 
-static int read(void *buf, unsigned short bufsize) {
-    uint8_t len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFLEN_MASK;
-    if (len > bufsize) return RADIO_RESULT_ERROR;
-    dwt_readrxdata(&buf, len, 0);
-}
+/*
+ * ------------------------------------------------------------------------
+ */
 
-static int channel_clear(void) {
+
+static int 
+channel_clear(void) {
     return 0;
 }
 
-static int receiving_packet(void) {
+/*
+ * ------------------------------------------------------------------------
+ */
+
+
+static int 
+receiving_packet(void) {
     return 0;
 }
 
-int dw1000_on(void){
-    if (dwt_rxenable(0) == DWT_ERROR){
+/*
+ * ------------------------------------------------------------------------
+ */
+
+static int 
+pending_packet(void) {
+    return packet_pending;
+}
+
+/*
+ * ------------------------------------------------------------------------
+ */
+
+int 
+dw1000_on(void){
+    dwt_setrxtimeout(0);
+    if (dwt_rxenable(0) != DWT_SUCCESS){
         return RADIO_RESULT_ERROR;
     }
     
     return RADIO_RESULT_OK;
 }
 
-int dw1000_off(void){
+/*
+ * ------------------------------------------------------------------------
+ */
+
+int 
+dw1000_off(void) {
     dwt_forcetrxoff();
     return 0;
+}
+
+/*
+ * ------------------------------------------------------------------------
+ */
+
+static radio_result_t 
+get_value(radio_param_t param, radio_value_t *value) {
+    return RADIO_RESULT_NOT_SUPPORTED;
+}
+
+static radio_result_t 
+set_value(radio_param_t param, radio_value_t value) {
+    return RADIO_RESULT_NOT_SUPPORTED;
+}
+
+static radio_result_t 
+get_object(radio_param_t param, void *dest, size_t size) {
+    return RADIO_RESULT_NOT_SUPPORTED;
+}
+static radio_result_t 
+set_object(radio_param_t param, const void *src, size_t size) {
+    return RADIO_RESULT_NOT_SUPPORTED;
+}
+
+PROCESS_THREAD(dw1000_process, ev, data)
+{
+    int len;
+    PROCESS_BEGIN();
+
+    PRINTF("dw1000_process: started\n"); 
+
+    while(1) {
+        PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
+
+        PRINTF("dwr frame\n");
+        /* Clear packetbuf to avoid having leftovers from previous receptions */
+        packetbuf_clear();
+
+        /* Copy the received frame to packetbuf */
+        len  = read(packetbuf_dataptr(), PACKETBUF_SIZE);
+        packetbuf_set_datalen(len);
+
+        /* Re-enable RX to keep listening */
+        dw1000_on();
+        /*PRINTF("dw1000_process: calling recv cb, len %d\n", data_len); */
+        NETSTACK_MAC.input();
+  }
+
+  PROCESS_END();
 }
