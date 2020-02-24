@@ -231,6 +231,7 @@ void deca_sleep(unsigned int time_ms)
 
 decaIrqStatus_t decamutexon(void) {
   // need to add things if I intend to use interrrupts
+    return 0;
 }
 
 void decamutexoff(decaIrqStatus_t s) {

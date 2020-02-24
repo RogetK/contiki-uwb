@@ -1,4 +1,5 @@
 #include "contiki.h"
+#include "sys/energest.h"
 
 #include "deca_device_api.h"
 #include "deca_regs.h"
@@ -8,6 +9,16 @@
 
 #include "net/netstack.h"
 #include "net/packetbuf.h"
+
+
+/*---------------------------------------------------------------------------*/
+
+#if DEBUG
+#include <stdio.h>
+#define PRINTF(...) printf(__VA_ARGS__)
+#else
+#define PRINTF(...) do {} while (0)
+#endif
 
 /*---------------------------------------------------------------------------*/
 PROCESS(dw1000_process, "DW1000 driver");
@@ -41,22 +52,23 @@ static radio_result_t get_object(radio_param_t param, void *dest, size_t size);
 static radio_result_t set_object(radio_param_t param, const void *src, size_t size);
 
 
-const struct radio_driver dw1000_driver = {
-    init,
-    prepare,
-    transmit,
-    send,
-    read,
-    channel_clear,
-    receiving_packet,
-    dw1000_on,
-    dw1000_off, 
-    get_value,
-    set_value,
-    get_object,
-    set_object,
+const struct radio_driver dw1000_driver =
+{
+  init,
+  prepare,
+  transmit,
+  send,
+  read,
+  channel_clear,
+  receiving_packet,
+  pending_packet,
+  dw1000_on,
+  dw1000_off,
+  get_value,
+  set_value,
+  get_object,
+  set_object
 };
-
 
 /* 
  * DW1000 radio init function
@@ -80,7 +92,7 @@ static dwt_config_t config = {
 
 static int 
 init(void) {
-    int result;
+    // int result;
 
     /* Reset radio */
     reset_DW1000();
@@ -110,7 +122,7 @@ prepare(const void *payload, unsigned short payload_len) {
     uint8_t frame_len = payload_len + CRC_LEN;
     if (frame_len > MAX_PAYLOAD_LEN) return RADIO_TX_ERR;
 
-    dwt_writetxdata(payload_len, &payload, 0);
+    dwt_writetxdata(payload_len, (uint8_t *)payload, 0);
     dwt_writetxfctrl(frame_len, 0, 0);
 
     return RADIO_RESULT_OK;
@@ -155,7 +167,7 @@ send(const void *payload, unsigned short payload_len) {
 
 static int 
 read(void *buf, unsigned short bufsize) {
-    dwt_readrxdata(&buf, bufsize, 0);
+    dwt_readrxdata((uint8_t *) buf, bufsize, 0);
     return bufsize;
 }
 
@@ -245,7 +257,7 @@ PROCESS_THREAD(dw1000_process, ev, data)
     while(1) {
         PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
 
-        PRINTF("dwr frame\n");
+        PRINTF("dw1000 frame\n");
         /* Clear packetbuf to avoid having leftovers from previous receptions */
         packetbuf_clear();
 
@@ -255,7 +267,7 @@ PROCESS_THREAD(dw1000_process, ev, data)
 
         /* Re-enable RX to keep listening */
         dw1000_on();
-        /*PRINTF("dw1000_process: calling recv cb, len %d\n", data_len); */
+         /*PRINTF("dw1000_process: calling recv cb, len %d\n", data_len); */
         NETSTACK_MAC.input();
   }
 
