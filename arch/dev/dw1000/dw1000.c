@@ -12,15 +12,6 @@
 
 
 /*---------------------------------------------------------------------------*/
-
-#if DEBUG
-#include <stdio.h>
-#define PRINTF(...) printf(__VA_ARGS__)
-#else
-#define PRINTF(...) do {} while (0)
-#endif
-
-/*---------------------------------------------------------------------------*/
 PROCESS(dw1000_process, "DW1000 driver");
 /*---------------------------------------------------------------------------*/
 
@@ -230,7 +221,17 @@ dw1000_off(void) {
 
 static radio_result_t 
 get_value(radio_param_t param, radio_value_t *value) {
-    return RADIO_RESULT_NOT_SUPPORTED;
+    if (!value)  return RADIO_RESULT_INVALID_VALUE;
+
+    switch(param) {
+    case RADIO_PARAM_RX_MODE:
+        *value = 0;
+        return RADIO_RESULT_OK;
+    default:
+        return RADIO_RESULT_NOT_SUPPORTED;
+    }
+
+
 }
 
 static radio_result_t 
@@ -252,12 +253,9 @@ PROCESS_THREAD(dw1000_process, ev, data)
     int len;
     PROCESS_BEGIN();
 
-    PRINTF("dw1000_process: started\n"); 
-
     while(1) {
         PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
 
-        PRINTF("dw1000 frame\n");
         /* Clear packetbuf to avoid having leftovers from previous receptions */
         packetbuf_clear();
 

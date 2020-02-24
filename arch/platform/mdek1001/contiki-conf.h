@@ -43,9 +43,13 @@
 #include "mdek1001-def.h"
 #include "nrf52832-def.h"
 /*---------------------------------------------------------------------------*/
-#ifndef SICSLOWPAN_CONF_FRAG
-#define SICSLOWPAN_CONF_FRAG                    1
-#endif
+#ifndef NETSTACK_CONF_RADIO
+#define NETSTACK_CONF_RADIO   dw1000_driver
+#endif /* NETSTACK_CONF_RADIO */
+
+// #ifndef SICSLOWPAN_CONF_FRAG
+// #define SICSLOWPAN_CONF_FRAG                    1
+// #endif
 /*---------------------------------------------------------------------------*/
 /* Include CPU-related configuration */
 #include "nrf52832-conf.h"
