@@ -39,6 +39,7 @@
 
 #include "contiki.h"
 #include "deca_device_api.h"
+#include "mdek1001-def.h"
 
 #include <stdio.h> /* For printf() */
 /*---------------------------------------------------------------------------*/
