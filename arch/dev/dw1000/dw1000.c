@@ -10,13 +10,17 @@
 #include "net/netstack.h"
 #include "net/packetbuf.h"
 
+#include "sys/log.h"
+
+#define LOG_MODULE "DW1000 driver"
+#define LOG_LEVEL LOG_LEVEL_ERR
 
 /*---------------------------------------------------------------------------*/
 PROCESS(dw1000_process, "DW1000 driver");
 /*---------------------------------------------------------------------------*/
 
-#define MAX_PAYLOAD_LEN (127)
 #define CRC_LEN 2
+#define MAX_PAYLOAD_LEN (127 - CRC_LEN)
 #define DW1000_RX_AFTER_TX_DELAY 0
 
 static bool packet_pending;
@@ -61,12 +65,20 @@ const struct radio_driver dw1000_driver =
   set_object
 };
 
-/* 
- * DW1000 radio init function
- * 
- */
+static const dwt_config_t default_config = {
+    5,                /* Channel number. */
+    DWT_PRF_64M,      /* Pulse repetition frequency. */
+    DWT_PLEN_64,     /* Preamble length. Used in TX only. */
+    DWT_PAC8,         /* Preamble acquisition chunk size. Used in RX only. */
+    10,               /* TX preamble code. Used in TX only. */
+    10,               /* RX preamble code. Used in RX only. */
+    0,                /* 0 to use standard SFD, 1 to use non-standard SFD. */
+    DWT_BR_6M8,       /* Data rate. */
+    DWT_PHRMODE_STD,  /* PHY header mode. */
+    (65 + 8 - 8)     /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
+};
 
-/*DW1000 config function*/
+
 static dwt_config_t config = {
     5,                /* Channel number. */
     DWT_PRF_64M,      /* Pulse repetition frequency. */
@@ -80,6 +92,33 @@ static dwt_config_t config = {
     (65 + 8 - 8)     /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
 };
 
+static int get_channel(dwt_config_t dw_config) {
+    int val = 0;
+    
+    val = (2 * config.chan) + config.prf; 
+    val = (config.chan == 7) ? val - 4 : val - 2;
+    return val; 
+}
+
+// static dwt_config_t set_channel(int channel) {
+//     dwt_config_t temp = default_config;
+
+//     switch(channel) {
+//     default:
+//         temp.chan = 5;
+//         temp.rxCode = 10;
+//         temp.txCode = 10;
+//         temp.prf = DWT_PRF_64M;
+//         return temp;
+//     }
+// }
+
+/* 
+ * DW1000 radio init function
+ * 
+ */
+
+/*DW1000 config function*/
 
 static int 
 init(void) {
@@ -227,6 +266,11 @@ get_value(radio_param_t param, radio_value_t *value) {
     case RADIO_PARAM_RX_MODE:
         *value = 0;
         return RADIO_RESULT_OK;
+
+    case RADIO_PARAM_CHANNEL:
+        *value = (radio_value_t) get_channel(config);
+        return RADIO_RESULT_OK;
+
     default:
         return RADIO_RESULT_NOT_SUPPORTED;
     }
