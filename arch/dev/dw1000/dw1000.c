@@ -7,6 +7,12 @@
 #include "port_platform.h"
 #include "mdek1001-def.h"
 
+#include "nrf_ppi.h"
+#include "nrf_drv_gpiote.h"
+#include "nrf_gpiote.h"
+#include "nrf_timer.h"
+#include "nrf_clock.h"
+
 #include "net/netstack.h"
 #include "net/packetbuf.h"
 
@@ -24,6 +30,8 @@ PROCESS(dw1000_process, "DW1000 driver");
 #define DW1000_RX_AFTER_TX_DELAY 0
 
 static bool packet_pending;
+static bool poll_mode = false;
+
 /*------------------------------------------------------------------------
  * Function Declarations
  *----------------------------------------------------------------------*/
@@ -65,6 +73,27 @@ const struct radio_driver dw1000_driver =
   set_object
 };
 
+
+
+
+static void ppi_init(void) {
+    ret_code_t err_code;
+    nrf_drv_gpiote_init();
+    nrf_drv_gpiote_in_config_t in_config = 
+        GPIOTE_CONFIG_IN_SENSE_LOTOHI(true); 
+
+    in_config.pull = NRF_GPIO_PIN_NOPULL;
+    err_code = nrf_drv_gpiote_in_init(DW1000_IRQ, &in_config, NULL);
+    APP_ERROR_CHECK(err_code);
+    nrf_drv_gpiote_in_event_enable(DW1000_IRQ, true);
+
+    nrf_ppi_channel_endpoint_setup(
+        NRF_PPI_CHANNEL0,
+        (uint32_t) nrf_drv_gpiote_in_event_addr_get(DW1000_IRQ), 
+        (uint32_t) nrf_timer_task_address_get(NRF_TIMER0, NRF_TIMER_TASK_CAPTURE3)
+    );
+}
+
 static const dwt_config_t default_config = {
     5,                /* Channel number. */
     DWT_PRF_64M,      /* Pulse repetition frequency. */
@@ -100,18 +129,6 @@ static int get_channel(dwt_config_t dw_config) {
     return val; 
 }
 
-// static dwt_config_t set_channel(int channel) {
-//     dwt_config_t temp = default_config;
-
-//     switch(channel) {
-//     default:
-//         temp.chan = 5;
-//         temp.rxCode = 10;
-//         temp.txCode = 10;
-//         temp.prf = DWT_PRF_64M;
-//         return temp;
-//     }
-// }
 
 /* 
  * DW1000 radio init function
@@ -129,8 +146,9 @@ init(void) {
     /* Set 2MHz SPI for radio initialisation */
     port_set_dw1000_slowrate();
     /* Initialise the radio */
-    if (dwt_initialise(DWT_LOADUCODE) == DWT_ERROR) 
-        return -1;
+    if (dwt_initialise(DWT_LOADUCODE) == DWT_ERROR) return -1;
+
+
     
     /* Set 8Mhz SPI for configuration and operation */
     port_set_dw1000_fastrate();
@@ -138,6 +156,8 @@ init(void) {
     dwt_configure(&config);
     /* Set radio indicator LEDs */
     dwt_setleds(1);
+
+    ppi_init();
 
     process_start(&dw1000_process, NULL);
     return RADIO_RESULT_OK;
@@ -265,6 +285,9 @@ get_value(radio_param_t param, radio_value_t *value) {
     switch(param) {
     case RADIO_PARAM_RX_MODE:
         *value = 0;
+        if(poll_mode) {
+            *value |= RADIO_RX_MODE_POLL_MODE;
+        }
         return RADIO_RESULT_OK;
 
     case RADIO_PARAM_CHANNEL:
