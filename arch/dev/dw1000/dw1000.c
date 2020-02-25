@@ -32,6 +32,9 @@ PROCESS(dw1000_process, "DW1000 driver");
 static bool packet_pending;
 static bool poll_mode = false;
 
+static volatile rtimer_clock_t timestamp_sfd;
+
+
 /*------------------------------------------------------------------------
  * Function Declarations
  *----------------------------------------------------------------------*/
@@ -100,7 +103,6 @@ static void ppi_init(void) {
     );
 
     nrf_ppi_channel_enable(NRF_PPI_CHANNEL0);
-    nrf_ppi_channel_enable(NRF_PPI_CHANNEL27);
 }
 
 static const dwt_config_t default_config = {
@@ -148,6 +150,8 @@ static int get_channel(dwt_config_t dw_config) {
 
 static int 
 init(void) {
+    
+    timestamp_sfd = 0;
     // int result;
     dw_interrupt_init();
     /* Reset radio */
@@ -225,11 +229,27 @@ send(const void *payload, unsigned short payload_len) {
  * ------------------------------------------------------------------------
  */
 
+/* 
+ * Clear the event bits in the radio interrrupt registers
+ * read packet data
+ * enter rx 
+ */
+
 
 static int 
 read(void *buf, unsigned short bufsize) {
-    dwt_readrxdata((uint8_t *) buf, bufsize, 0);
-    return bufsize;
+    uint8_t frame_len; 
+
+    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXPHD);
+
+    frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFL_MASK_1023;
+    dwt_readrxdata((uint8_t *) buf, frame_len, 0);
+
+    // Timestamp in rtimer ticks for complete reception of SFD
+    timestamp_sfd = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL3);
+
+    dwt_rxenable(0);
+    return frame_len;
 }
 
 /*
@@ -294,6 +314,11 @@ get_value(radio_param_t param, radio_value_t *value) {
     if (!value)  return RADIO_RESULT_INVALID_VALUE;
 
     switch(param) {
+
+    case RADIO_PARAM_CHANNEL:
+        *value = (radio_value_t) get_channel(config);
+        return RADIO_RESULT_OK;
+    
     case RADIO_PARAM_RX_MODE:
         *value = 0;
         if(poll_mode) {
@@ -301,8 +326,9 @@ get_value(radio_param_t param, radio_value_t *value) {
         }
         return RADIO_RESULT_OK;
 
-    case RADIO_PARAM_CHANNEL:
-        *value = (radio_value_t) get_channel(config);
+
+    case RADIO_PARAM_TX_MODE:
+        *value = 0;
         return RADIO_RESULT_OK;
 
     default:
@@ -314,6 +340,24 @@ get_value(radio_param_t param, radio_value_t *value) {
 
 static radio_result_t 
 set_value(radio_param_t param, radio_value_t value) {
+    switch(param){
+
+    case RADIO_PARAM_RX_MODE:
+        if ( value & ~(RADIO_RX_MODE_ADDRESS_FILTER |
+        RADIO_RX_MODE_AUTOACK |
+        RADIO_RX_MODE_POLL_MODE)) {
+            return RADIO_RESULT_INVALID_VALUE;
+        }
+        poll_mode = true;
+        return RADIO_RESULT_OK;
+
+    case RADIO_PARAM_CHANNEL:
+        if (value < DW1000_CHANNEL_MIN || value > DW1000_CHANNEL_MAX) {
+            return RADIO_RESULT_INVALID_VALUE;
+        }
+
+        
+    }
     return RADIO_RESULT_NOT_SUPPORTED;
 }
 
