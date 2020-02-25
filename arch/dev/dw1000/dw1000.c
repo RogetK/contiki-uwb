@@ -29,6 +29,9 @@ PROCESS(dw1000_process, "DW1000 driver");
 #define MAX_PAYLOAD_LEN (127 - CRC_LEN)
 #define DW1000_RX_AFTER_TX_DELAY 0
 
+#define DW1000_CHANNEL_MIN 0
+#define DW1000_CHANNEL_MAX (MAX_CHANNELS - 1)
+
 static bool packet_pending;
 static bool poll_mode = false;
 
@@ -110,14 +113,34 @@ static const dwt_config_t default_config = {
     DWT_PRF_64M,      /* Pulse repetition frequency. */
     DWT_PLEN_64,     /* Preamble length. Used in TX only. */
     DWT_PAC8,         /* Preamble acquisition chunk size. Used in RX only. */
-    10,               /* TX preamble code. Used in TX only. */
-    10,               /* RX preamble code. Used in RX only. */
+    12,               /* TX preamble code. Used in TX only. */
+    12,               /* RX preamble code. Used in RX only. */
     0,                /* 0 to use standard SFD, 1 to use non-standard SFD. */
     DWT_BR_6M8,       /* Data rate. */
     DWT_PHRMODE_STD,  /* PHY header mode. */
     (65 + 8 - 8)     /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
 };
 
+static const dwt_config_t defaults[12] ={
+    {1, DWT_PRF_16M, DWT_PLEN_64, DWT_PAC8, 1, 1, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {1, DWT_PRF_64M, DWT_PLEN_64, DWT_PAC8, 9, 9, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {2, DWT_PRF_16M, DWT_PLEN_64, DWT_PAC8, 3, 3, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {2, DWT_PRF_64M, DWT_PLEN_64, DWT_PAC8, 10, 10, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {3, DWT_PRF_16M, DWT_PLEN_64, DWT_PAC8, 5, 5, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {3, DWT_PRF_64M, DWT_PLEN_64, DWT_PAC8, 11, 11, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {4, DWT_PRF_16M, DWT_PLEN_64, DWT_PAC8, 7, 7, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {4, DWT_PRF_64M, DWT_PLEN_64, DWT_PAC8, 17, 17, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {5, DWT_PRF_16M, DWT_PLEN_64, DWT_PAC8, 4, 4, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {5, DWT_PRF_64M, DWT_PLEN_64, DWT_PAC8, 12, 12, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {7, DWT_PRF_16M, DWT_PLEN_64, DWT_PAC8, 8, 8, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+    {7, DWT_PRF_64M, DWT_PLEN_64, DWT_PAC8, 19, 19, 0, DWT_BR_6M8, DWT_PHRMODE_STD, 65},
+};
+
+typedef enum {
+    CH1_16 = 0, CH1_64, CH2_16, CH2_64,
+    CH3_16, CH3_64, CH4_16, CH4_64,
+    CH5_16, CH5_64, CH7_16, CH7_64, MAX_CHANNELS
+} channels_e;
 
 static dwt_config_t config = {
     5,                /* Channel number. */
@@ -137,9 +160,14 @@ static int get_channel(dwt_config_t dw_config) {
     
     val = (2 * config.chan) + config.prf; 
     val = (config.chan == 7) ? val - 4 : val - 2;
-    return val; 
+    return val-1; 
 }
 
+static int set_channel(channels_e value) {
+    memcpy(&config, &(defaults[value]), sizeof(dwt_config_t));
+    dwt_configure(&config);
+    return 0;
+}
 
 /* 
  * DW1000 radio init function
@@ -355,9 +383,10 @@ set_value(radio_param_t param, radio_value_t value) {
         if (value < DW1000_CHANNEL_MIN || value > DW1000_CHANNEL_MAX) {
             return RADIO_RESULT_INVALID_VALUE;
         }
-
-        
+        set_channel(value);
+        return RADIO_RESULT_OK;
     }
+
     return RADIO_RESULT_NOT_SUPPORTED;
 }
 
