@@ -166,7 +166,7 @@ init(void) {
     /* Set radio indicator LEDs */
     dwt_setleds(1);
 
-    dwt_setinterrupt(DWT_INT_RXSFD, 1);
+    dwt_setinterrupt(DWT_INT_RXPHD, 1);
 
     ppi_init();
 

@@ -144,6 +144,8 @@ typedef signed long int32;
 #define DWT_INT_SFDT            0x04000000          // SFD timeout
 #define DWT_INT_ARFE            0x20000000          // frame rejected (due to frame filtering configuration)
 #define DWT_INT_RXSFD           0x00000200          // Rx Start of frame detected
+#define DWT_INT_RXPHD           0x00000800          // Receiver PHY Header Detect */
+
 
 //DW1000 SLEEP and WAKEUP configuration parameters
 #define DWT_PRESRV_SLEEP 0x0100                      // PRES_SLEEP - on wakeup preserve sleep bit
