@@ -74,24 +74,33 @@ const struct radio_driver dw1000_driver =
 };
 
 
-
-
-static void ppi_init(void) {
+static void dw_interrupt_init(void){
     ret_code_t err_code;
     nrf_drv_gpiote_init();
     nrf_drv_gpiote_in_config_t in_config = 
         GPIOTE_CONFIG_IN_SENSE_LOTOHI(true); 
 
     in_config.pull = NRF_GPIO_PIN_NOPULL;
-    err_code = nrf_drv_gpiote_in_init(DW1000_IRQ, &in_config, NULL);
+    err_code = 
+        nrf_drv_gpiote_in_init(DW1000_IRQ, &in_config, NULL);
+
     APP_ERROR_CHECK(err_code);
     nrf_drv_gpiote_in_event_enable(DW1000_IRQ, true);
+   
+}
+
+
+
+static void ppi_init(void) {
 
     nrf_ppi_channel_endpoint_setup(
         NRF_PPI_CHANNEL0,
         (uint32_t) nrf_drv_gpiote_in_event_addr_get(DW1000_IRQ), 
         (uint32_t) nrf_timer_task_address_get(NRF_TIMER0, NRF_TIMER_TASK_CAPTURE3)
     );
+
+    nrf_ppi_channel_enable(NRF_PPI_CHANNEL0);
+    nrf_ppi_channel_enable(NRF_PPI_CHANNEL27);
 }
 
 static const dwt_config_t default_config = {
@@ -140,7 +149,7 @@ static int get_channel(dwt_config_t dw_config) {
 static int 
 init(void) {
     // int result;
-
+    dw_interrupt_init();
     /* Reset radio */
     reset_DW1000();
     /* Set 2MHz SPI for radio initialisation */
@@ -156,6 +165,8 @@ init(void) {
     dwt_configure(&config);
     /* Set radio indicator LEDs */
     dwt_setleds(1);
+
+    dwt_setinterrupt(DWT_INT_RXSFD, 1);
 
     ppi_init();
 
