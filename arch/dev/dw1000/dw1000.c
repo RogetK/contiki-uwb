@@ -15,6 +15,7 @@
 
 #include "net/netstack.h"
 #include "net/packetbuf.h"
+#include "net/mac/tsch/tsch.h"
 
 #include "sys/log.h"
 
@@ -306,7 +307,15 @@ receiving_packet(void) {
 
 static int 
 pending_packet(void) {
-    return packet_pending;
+
+    uint32_t status_reg = dwt_read32bitreg(SYS_STATUS_ID);
+
+    if (status_reg & SYS_STATUS_RXFCG) {
+        dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG);
+        return 1;
+    }
+
+    return 0;
 }
 
 /*
@@ -392,6 +401,23 @@ set_value(radio_param_t param, radio_value_t value) {
 
 static radio_result_t 
 get_object(radio_param_t param, void *dest, size_t size) {
+
+    if (param == RADIO_PARAM_LAST_PACKET_TIMESTAMP) {
+        if (sisze != sizeof(rtimer_clock_t) || !dest) {
+            return RADIO_RESULT_INVALID_VALUE;
+        }
+        *(rtimer_clock_t *) dest =timestamp_sfd;
+        return RADIO_RESULT_OK;
+    }
+
+    if (param == RADIO_CONST_TSCH_TIMING) {
+        if (size != sizeof(uint16_t *) || !dest) {
+            return RADIO_RESULT_INVALID_VALUE;
+        }
+
+        *(const uint16_t **) dest = tsch_timeslot_timing_us_10000;
+        return RADIO_RESULT_OK;
+    }
     return RADIO_RESULT_NOT_SUPPORTED;
 }
 static radio_result_t 
@@ -408,16 +434,19 @@ PROCESS_THREAD(dw1000_process, ev, data)
         PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
 
         /* Clear packetbuf to avoid having leftovers from previous receptions */
-        packetbuf_clear();
+        if(pending_packet()) {
+            watchdog_periodic();
+            packetbuf_clear();
 
-        /* Copy the received frame to packetbuf */
-        len  = read(packetbuf_dataptr(), PACKETBUF_SIZE);
-        packetbuf_set_datalen(len);
+            /* Copy the received frame to packetbuf */
+            len  = read(packetbuf_dataptr(), PACKETBUF_SIZE);
+            packetbuf_set_datalen(len);
 
-        /* Re-enable RX to keep listening */
-        dw1000_on();
-         /*PRINTF("dw1000_process: calling recv cb, len %d\n", data_len); */
-        NETSTACK_MAC.input();
+            /* Re-enable RX to keep listening */
+            dw1000_on();
+            /*PRINTF("dw1000_process: calling recv cb, len %d\n", data_len); */
+            NETSTACK_MAC.input();
+        }
   }
 
   PROCESS_END();
