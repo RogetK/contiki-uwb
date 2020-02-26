@@ -54,18 +54,20 @@
 #define RTIMERTICKS_TO_US_64(T)  ((uint32_t)(((uint64_t)(T) * 1000000 + ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND)))
 /*---------------------------------------------------------------------------*/
 #define RADIO_PHY_OVERHEAD            3
-#define RADIO_BYTE_AIR_TIME          32
-#define RADIO_SHR_LEN                 5 /* Synch word + SFD */
+#define RADIO_BYTE_AIR_TIME           1
+
 #define RADIO_DELAY_BEFORE_TX         \
-  ((unsigned)US_TO_RTIMERTICKS(RADIO_SHR_LEN * RADIO_BYTE_AIR_TIME))
-/* Very conservative value moved over from CC2538 */
-#define RADIO_DELAY_BEFORE_RX         ((unsigned)US_TO_RTIMERTICKS(250))
-#define RADIO_DELAY_BEFORE_DETECT     2
+  ((unsigned)US_TO_RTIMERTICKS(147))
+
+#define RADIO_DELAY_BEFORE_RX         ((unsigned)US_TO_RTIMERTICKS(16))
 
 #define TSCH_CONF_HW_FRAME_FILTERING  0
 #define TSCH_CONF_RADIO_ON_DURING_TIMESLOT 1
 
 #ifndef TSCH_CONF_BASE_DRIFT_PPM
+
+#define RADIO_DELAY_BEFORE_DETECT     10
+
 /*
  * The drift compared to "true" 10ms slots.
  * Enable adaptive sync to enable compensation for this.

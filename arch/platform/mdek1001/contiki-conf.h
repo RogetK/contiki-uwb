@@ -54,6 +54,9 @@
 /* Include CPU-related configuration */
 #include "nrf52832-conf.h"
 /*---------------------------------------------------------------------------*/
+
+
+
 /** @} */
 #endif /* CONTIKI_CONF_H */
 /**

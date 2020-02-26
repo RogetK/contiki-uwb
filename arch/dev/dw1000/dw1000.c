@@ -33,6 +33,7 @@ PROCESS(dw1000_process, "DW1000 driver");
 #define DW1000_CHANNEL_MIN 0
 #define DW1000_CHANNEL_MAX (MAX_CHANNELS - 1)
 
+static bool is_listening = false;
 static bool packet_pending;
 static bool poll_mode = false;
 
@@ -165,6 +166,7 @@ static int get_channel(dwt_config_t dw_config) {
 }
 
 static int set_channel(channels_e value) {
+    dwt_forcetrxoff();
     memcpy(&config, &(defaults[value]), sizeof(dwt_config_t));
     dwt_configure(&config);
     return 0;
@@ -232,6 +234,7 @@ transmit(unsigned short transmit_len) {
     
     // Ensure radio is in a IDLE state before sending.
     dwt_forcetrxoff(); 
+    is_listening = false;
     dwt_setrxaftertxdelay(DW1000_RX_AFTER_TX_DELAY);
 
     // start transmission
@@ -268,6 +271,8 @@ send(const void *payload, unsigned short payload_len) {
 static int 
 read(void *buf, unsigned short bufsize) {
     uint8_t frame_len; 
+    
+    is_listening = false;
 
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXPHD);
 
@@ -278,6 +283,7 @@ read(void *buf, unsigned short bufsize) {
     timestamp_sfd = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL3);
 
     dwt_rxenable(0);
+    is_listening = true;
     return frame_len;
 }
 
@@ -298,8 +304,8 @@ channel_clear(void) {
 
 static int 
 receiving_packet(void) {
-
-    return 0;
+    if (is_listening) return 0;
+    else return 1;
 }
 
 /*
@@ -465,7 +471,7 @@ PROCESS_THREAD(dw1000_process, ev, data)
             packetbuf_set_datalen(len);
 
             /* Re-enable RX to keep listening */
-            dw1000_on();
+            // dw1000_on();
             /*PRINTF("dw1000_process: calling recv cb, len %d\n", data_len); */
             NETSTACK_MAC.input();
         }
