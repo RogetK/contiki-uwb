@@ -298,6 +298,7 @@ channel_clear(void) {
 
 static int 
 receiving_packet(void) {
+
     return 0;
 }
 
@@ -312,10 +313,13 @@ pending_packet(void) {
 
     if (status_reg & SYS_STATUS_RXFCG) {
         dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG);
-        return 1;
+
+        packet_pending = true;
+        return packet_pending;
     }
 
-    return 0;
+    packet_pending = false;
+    return packet_pending;
 }
 
 /*
@@ -375,6 +379,10 @@ get_value(radio_param_t param, radio_value_t *value) {
 
 }
 
+/*
+ * ------------------------------------------------------------------------
+ */
+
 static radio_result_t 
 set_value(radio_param_t param, radio_value_t value) {
     switch(param){
@@ -399,11 +407,15 @@ set_value(radio_param_t param, radio_value_t value) {
     return RADIO_RESULT_NOT_SUPPORTED;
 }
 
+/*
+ * ------------------------------------------------------------------------
+ */
+
 static radio_result_t 
 get_object(radio_param_t param, void *dest, size_t size) {
 
     if (param == RADIO_PARAM_LAST_PACKET_TIMESTAMP) {
-        if (sisze != sizeof(rtimer_clock_t) || !dest) {
+        if (size != sizeof(rtimer_clock_t) || !dest) {
             return RADIO_RESULT_INVALID_VALUE;
         }
         *(rtimer_clock_t *) dest =timestamp_sfd;
@@ -420,10 +432,20 @@ get_object(radio_param_t param, void *dest, size_t size) {
     }
     return RADIO_RESULT_NOT_SUPPORTED;
 }
+
+
+/*
+ * ------------------------------------------------------------------------
+ */
+
 static radio_result_t 
 set_object(radio_param_t param, const void *src, size_t size) {
     return RADIO_RESULT_NOT_SUPPORTED;
 }
+
+/*
+ * ------------------------------------------------------------------------
+ */
 
 PROCESS_THREAD(dw1000_process, ev, data)
 {
