@@ -18,9 +18,13 @@
 #include "net/mac/tsch/tsch.h"
 
 #include "sys/log.h"
+#define LOG_MODULE "DW1000"
 
-#define LOG_MODULE "DW1000 driver"
-#define LOG_LEVEL LOG_LEVEL_ERR
+#if defined(LOG_LEVEL_DW1000)
+#define LOG_LEVEL LOG_LEVEL_DW1000
+#else
+#define LOG_LEVEL LOG_LEVEL_NONE
+#endif
 
 /*---------------------------------------------------------------------------*/
 PROCESS(dw1000_process, "DW1000 driver");
@@ -181,7 +185,6 @@ static int set_channel(channels_e value) {
 
 static int 
 init(void) {
-    
     timestamp_sfd = 0;
     // int result;
     dw_interrupt_init();
@@ -190,8 +193,10 @@ init(void) {
     /* Set 2MHz SPI for radio initialisation */
     port_set_dw1000_slowrate();
     /* Initialise the radio */
-    if (dwt_initialise(DWT_LOADUCODE) == DWT_ERROR) return -1;
-
+    if (dwt_initialise(DWT_LOADUCODE) == DWT_ERROR) {
+        LOG_DBG("DW1000 Init failed\n");    
+        return -1;
+    }
 
     
     /* Set 8Mhz SPI for configuration and operation */
@@ -206,6 +211,8 @@ init(void) {
     ppi_init();
 
     process_start(&dw1000_process, NULL);
+
+    LOG_DBG("DW1000 Init complete\n");
     return RADIO_RESULT_OK;
 }
 
@@ -314,7 +321,6 @@ receiving_packet(void) {
 
 static int 
 pending_packet(void) {
-
     uint32_t status_reg = dwt_read32bitreg(SYS_STATUS_ID);
 
     if (status_reg & SYS_STATUS_RXFCG) {
@@ -375,9 +381,12 @@ get_value(radio_param_t param, radio_value_t *value) {
 
 
     case RADIO_PARAM_TX_MODE:
-        *value = 0;
+        // *value = 0;
         return RADIO_RESULT_OK;
 
+    case RADIO_CONST_MAX_PAYLOAD_LEN:
+        *value = (radio_value_t) MAX_PAYLOAD_LEN;
+        return RADIO_RESULT_OK;
     default:
         return RADIO_RESULT_NOT_SUPPORTED;
     }
@@ -408,6 +417,9 @@ set_value(radio_param_t param, radio_value_t value) {
         }
         set_channel(value);
         return RADIO_RESULT_OK;
+
+    case RADIO_PARAM_TX_MODE:
+       return RADIO_RESULT_OK; 
     }
 
     return RADIO_RESULT_NOT_SUPPORTED;
@@ -419,7 +431,6 @@ set_value(radio_param_t param, radio_value_t value) {
 
 static radio_result_t 
 get_object(radio_param_t param, void *dest, size_t size) {
-
     if (param == RADIO_PARAM_LAST_PACKET_TIMESTAMP) {
         if (size != sizeof(rtimer_clock_t) || !dest) {
             return RADIO_RESULT_INVALID_VALUE;
@@ -460,7 +471,6 @@ PROCESS_THREAD(dw1000_process, ev, data)
 
     while(1) {
         PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
-
         /* Clear packetbuf to avoid having leftovers from previous receptions */
         if(pending_packet()) {
             watchdog_periodic();

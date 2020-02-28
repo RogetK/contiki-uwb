@@ -11,6 +11,7 @@ int dw1000_on(void);
 int dw1000_off(void);
 
 
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE (uint8_t[]) {0, 2, 4 , 6, 8, 10}
 #define DW1000_DEFAULT_CHANNEL 0
 
 #endif

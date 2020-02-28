@@ -42,9 +42,16 @@
 /* Include platform peripherals configuration */
 #include "mdek1001-def.h"
 #include "nrf52832-def.h"
+
+#define LOG_CONF_LEVEL_MAC  LOG_LEVEL_DBG
+#define LOG_LEVEL_DW1000    LOG_LEVEL_DBG
+
 /*---------------------------------------------------------------------------*/
 #ifndef NETSTACK_CONF_RADIO
 #define NETSTACK_CONF_RADIO   dw1000_driver
+
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE (uint8_t[]) {0, 2, 4 , 6, 8, 10}
+
 #endif /* NETSTACK_CONF_RADIO */
 
 // #ifndef SICSLOWPAN_CONF_FRAG
