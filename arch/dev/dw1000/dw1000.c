@@ -171,8 +171,10 @@ static int get_channel(dwt_config_t dw_config) {
 }
 
 static int set_channel(channels_e value) {
+
     dwt_forcetrxoff();
     rx = false;
+
     memcpy(&config, &(defaults[value]), sizeof(dwt_config_t));
     dwt_configure(&config);
     return 0;
