@@ -296,7 +296,7 @@ read(void *buf, unsigned short bufsize) {
 
     // Timestamp in rtimer ticks for complete reception of SFD
     timestamp_sfd = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL3);
-    return frame_len;
+    return (frame_len - CRC_LEN);
 }
 
 /*
