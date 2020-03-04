@@ -1,0 +1,4 @@
+loadfile build/mdek1001/hello-world.hex
+r
+g
+q

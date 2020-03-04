@@ -50,7 +50,7 @@
 #ifndef NETSTACK_CONF_RADIO
 #define NETSTACK_CONF_RADIO   dw1000_driver
 
-#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE (uint8_t[]) {0, 2, 4 , 6, 8, 10}
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE (uint8_t[]) {9}
 
 #endif /* NETSTACK_CONF_RADIO */
 

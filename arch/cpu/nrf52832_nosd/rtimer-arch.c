@@ -21,6 +21,7 @@ rtimer_arch_init(void)
   nrf_timer_bit_width_set(TIMER_INSTANCE, NRF_TIMER_BIT_WIDTH_32);
   nrf_timer_mode_set(TIMER_INSTANCE, NRF_TIMER_MODE_TIMER);
   nrf_timer_int_enable(TIMER_INSTANCE, NRF_TIMER_INT_COMPARE0_MASK);
+  NVIC_SetPriority(TIMER0_IRQn, 1);
   NVIC_ClearPendingIRQ(TIMER0_IRQn);
   NVIC_EnableIRQ(TIMER0_IRQn);
   nrf_timer_task_trigger(TIMER_INSTANCE, NRF_TIMER_TASK_START);

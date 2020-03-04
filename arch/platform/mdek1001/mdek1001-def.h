@@ -99,7 +99,7 @@
 #define SPIM1_SCK_PIN   16  // DWM1001 SPIM1 sck connected to DW1000
 #define SPIM1_MOSI_PIN  20  // DWM1001 SPIM1 mosi connected to DW1000
 #define SPIM1_MISO_PIN  18  // DWM1001 SPIM1 miso connected to DW1000
-#define SPIM1_IRQ_PRIORITY APP_IRQ_PRIORITY_LOW // 
+#define SPIM1_IRQ_PRIORITY 0// 
 #define SPIM1_SS_PIN    17  //  Not used with DMW1001
 
 #define SPIM2_SCK_PIN   12  // SPI clock GPIO pin number.

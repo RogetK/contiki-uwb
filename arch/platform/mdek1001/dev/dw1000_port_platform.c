@@ -89,6 +89,7 @@ void port_wakeup_dw1000_fast(void)
 void spi_event_handler(nrf_drv_spi_evt_t const * p_event, void * p_context)
 {
     spi_xfer_done = true;
+    nrf_gpio_pin_set(LED_1);
 }
 
 //================================================================================================
@@ -110,10 +111,10 @@ int readfromspi(uint16 headerLength, const uint8 *headerBuffer, uint32 readlengt
   p1 += headerLength;
   memset(p1,0x00,readlength);
 
+  nrf_gpio_pin_clear(LED_1);
   spi_xfer_done = false;
   nrf_drv_spi_transfer(&spi, idatabuf, idatalength, itempbuf, idatalength);
-  while(!spi_xfer_done)				
-  ;
+  while(!spi_xfer_done);
 
   p1=itempbuf + headerLength;
 
@@ -140,11 +141,11 @@ int writetospi( uint16 headerLength, const uint8 *headerBuffer, uint32 bodylengt
   memcpy(p1,headerBuffer, headerLength);
   p1 += headerLength;
   memcpy(p1,bodyBuffer,bodylength);
-  
+
+  nrf_gpio_pin_clear(LED_1); 
   spi_xfer_done = false;
   nrf_drv_spi_transfer(&spi, idatabuf, idatalength, itempbuf, idatalength);
-  while(!spi_xfer_done)
-                          ;
+  while(!spi_xfer_done);
 
   return 0;
 } 
@@ -189,8 +190,6 @@ void reset_DW1000(void)
   nrf_gpio_cfg_output(DW1000_RST);   
   nrf_gpio_pin_clear(DW1000_RST);  
   nrf_delay_ms(2); 
-  //nrf_gpio_pin_set(DW1000_RST);  
-  //nrf_delay_ms(50); 
   nrf_gpio_cfg_input(DW1000_RST, NRF_GPIO_PIN_NOPULL); 
   nrf_delay_ms(2); 
 }
@@ -215,7 +214,7 @@ void port_set_dw1000_fastrate(void)
 { nrf_drv_spi_uninit(&spi);
 	nrf_drv_spi_config_t  spi_config = NRF_DRV_SPI_DEFAULT_CONFIG_8M(SPI_INSTANCE);
 	spi_config.ss_pin = SPIM1_SS_PIN;
-	APP_ERROR_CHECK( nrf_drv_spi_init(&spi, &spi_config, spi_event_handler,NULL) );
+	APP_ERROR_CHECK( nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL) );
 	nrf_delay_ms(2);	
 }
 
