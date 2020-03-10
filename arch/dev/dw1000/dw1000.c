@@ -229,7 +229,7 @@ prepare(const void *payload, unsigned short payload_len) {
     if (frame_len > MAX_PAYLOAD_LEN) return RADIO_TX_ERR;
     
     // write data to radio buffer
-    dwt_writetxdata(payload_len, (uint8_t *)payload, 0);
+    dwt_writetxdata(frame_len, (uint8_t *)payload, 0);
     dwt_writetxfctrl(frame_len, 0, 0);
 
     return RADIO_RESULT_OK;
@@ -292,7 +292,7 @@ read(void *buf, unsigned short bufsize) {
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXPHD);
 
     frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFL_MASK_1023;
-    dwt_readrxdata((uint8_t *) buf, frame_len-CRC_LEN, 0);
+    dwt_readrxdata((uint8_t *) buf, frame_len, 0);
 
     // Timestamp in rtimer ticks for complete reception of SFD
     timestamp_sfd = nrf_timer_cc_read(NRF_TIMER0, NRF_TIMER_CC_CHANNEL3);

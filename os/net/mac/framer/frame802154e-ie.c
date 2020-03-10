@@ -43,7 +43,7 @@
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "Frame 15.4"
-#define LOG_LEVEL LOG_LEVEL_FRAMER
+#define LOG_LEVEL LOG_LEVEL_DBG
 
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
@@ -489,6 +489,7 @@ frame802154e_parse_information_elements(const uint8_t *buf, uint8_t buf_size,
     if(buf_size < 2) { /* Not enough space for IE descriptor */
       return -1;
     }
+
     READ16(buf, ie_desc);
     buf_size -= 2;
     buf += 2;

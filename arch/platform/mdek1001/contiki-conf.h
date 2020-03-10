@@ -45,7 +45,7 @@
 
 #define LOG_CONF_LEVEL_MAC  LOG_LEVEL_DBG
 #define LOG_LEVEL_DW1000    LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_RPL LOG_LEVEL_DBG
 /*---------------------------------------------------------------------------*/
 #ifndef NETSTACK_CONF_RADIO
 #define NETSTACK_CONF_RADIO   dw1000_driver
